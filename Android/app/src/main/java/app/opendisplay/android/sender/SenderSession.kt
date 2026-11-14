@@ -56,10 +56,7 @@ class SenderSession(
 
     private fun run() {
         try {
-            val socket = Socket().apply {
-                tcpNoDelay = true
-                connect(InetSocketAddress(host, port), 5000)
-            }
+            val socket = connectWithRetry()
             this.socket = socket
             val input = DataInputStream(BufferedInputStream(socket.getInputStream()))
             val output = DataOutputStream(BufferedOutputStream(socket.getOutputStream()))
@@ -98,13 +95,51 @@ class SenderSession(
                 handle(JSONObject(String(frame, Charsets.UTF_8)), sink)
             }
         } catch (e: Exception) {
+            app.opendisplay.android.Log.w("od-sender",
+                "session failed: ${e.javaClass.simpleName}: ${e.message ?: ""}")
             if (running) {
-                SenderService.status = context.getString(
-                    R.string.sender_error, e.message ?: e.javaClass.simpleName)
+                SenderService.status = context.getString(R.string.sender_connect_failed, describe(e))
             }
         } finally {
             finish()
         }
+    }
+
+    /** A Wi-Fi handshake can lose its first race with discovery or a Mac's
+     *  wake; a short retry keeps the capture consent instead of stopping. */
+    private fun connectWithRetry(): Socket {
+        var last: Exception? = null
+        for (attempt in 1..3) {
+            if (!running) throw IOException("cancelled")
+            val socket = Socket()
+            try {
+                socket.tcpNoDelay = true
+                val address = InetSocketAddress(host, port)
+                app.opendisplay.android.Log.i(
+                    "od-sender", "connecting to $address (attempt $attempt/3)")
+                socket.connect(address, 4000)
+                return socket
+            } catch (e: Exception) {
+                try {
+                    socket.close()
+                } catch (_: IOException) {
+                }
+                last = e
+                if (!running || attempt == 3) break
+                SenderService.status = context.getString(
+                    R.string.sender_retrying, attempt, 3)
+                Thread.sleep(1000L * attempt)
+            }
+        }
+        throw last ?: IOException("cancelled")
+    }
+
+    private fun describe(e: Exception): String = when (e) {
+        is java.net.SocketTimeoutException -> context.getString(R.string.sender_timeout)
+        is java.net.ConnectException -> context.getString(R.string.sender_refused)
+        is java.net.UnknownHostException -> context.getString(R.string.sender_bad_host)
+        is java.net.NoRouteToHostException -> context.getString(R.string.sender_unreachable)
+        else -> e.message ?: e.javaClass.simpleName
     }
 
     /** The session ended on its own (Mac closed, network error): tell the service. */

@@ -27,6 +27,8 @@ final class InputInjector {
     private let displayID: CGDirectDisplayID
     private var isDown = false
     private var penDown = false
+    private var warnedMissingPermission = false
+    private var loggedFirstTouch = false
     // A real event source (vs nil) plus non-zero clickState on down/up: menu
     // tracking treats sourceless/zero-click synthetic clicks as malformed — menus
     // open but their tracking session breaks, leaving zombie menu windows
@@ -73,6 +75,21 @@ final class InputInjector {
 
     /// x/y are normalized [0,1] in video space (origin top-left).
     func handleTouch(phase: String, x: Double, y: Double) {
+        // macOS silently drops synthetic HID events from an untrusted process.
+        // Check once per event so the log says why a tablet tap did nothing,
+        // and don't leave a stale button-down behind when trust is revoked.
+        guard AXIsProcessTrusted() else {
+            isDown = false
+            if !warnedMissingPermission {
+                warnedMissingPermission = true
+                Log.info("touch ignored: Accessibility permission missing")
+            }
+            return
+        }
+        if !loggedFirstTouch {
+            loggedFirstTouch = true
+            Log.info("touch input active on display \(displayID)")
+        }
         let bounds = CGDisplayBounds(displayID)   // global CG coords, y-down
         let point = CGPoint(
             x: bounds.origin.x + x * bounds.width,

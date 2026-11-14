@@ -19,6 +19,12 @@
     <string name="sender_active">Casting. Keep this app open.</string>
     <string name="sender_stopped">Stopped.</string>
     <string name="sender_error">Could not start: %1$s</string>
+    <string name="sender_retrying">Connection failed, retrying (%1$d/%2$d)…</string>
+    <string name="sender_connect_failed">Could not connect to the Mac: %1$s. Make sure Receive a screen is on, both devices share the same Wi-Fi, and the firewall allows OpenDisplay.</string>
+    <string name="sender_timeout">connection timed out</string>
+    <string name="sender_refused">connection refused — is “Receive a screen” enabled on the Mac?</string>
+    <string name="sender_bad_host">invalid Mac address</string>
+    <string name="sender_unreachable">network unreachable — check that both devices are on the same Wi-Fi</string>
     <string name="ui_tagline">Your tablet as a wireless Mac display</string>
     <string name="ui_get_started">Get started</string>
     <string name="ui_steps_title">How it works</string>
@@ -33,6 +39,7 @@
     <string name="title">OpenDisplay</string>
     <string name="status_ready">Ready to connect</string>
     <string name="status_waiting_picture">Connected, waiting for the picture…</string>
+    <string name="receiver_mac_input_unavailable">The Mac has not granted Accessibility, so touches on this tablet cannot control it. Enable OpenDisplay under System Settings → Privacy &amp; Security → Accessibility on the Mac.</string>
     <string name="update_sender">OpenDisplay on the connecting Mac is too old for this app. Update it there to reconnect.</string>
 
     <string name="hint_open_mac">Open OpenDisplay on your computer</string>

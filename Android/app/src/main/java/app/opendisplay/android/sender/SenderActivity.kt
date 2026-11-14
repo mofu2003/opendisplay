@@ -66,6 +66,11 @@ class SenderActivity : AppCompatActivity() {
         override fun run() {
             status.text = SenderService.status.ifEmpty { getString(R.string.sender_stopped) }
             val casting = SenderService.casting
+            if (casting) {
+                window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
             statusDot.background = circle(
                 color(if (casting) R.color.od_success else R.color.od_warning))
             startButton.isEnabled = !casting

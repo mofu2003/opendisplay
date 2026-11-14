@@ -12,6 +12,7 @@ import android.hardware.usb.UsbAccessory
 import android.hardware.usb.UsbManager
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -62,6 +63,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     private lateinit var blank: View
     private lateinit var idleView: IdleView
     private lateinit var statsText: TextView
+    private lateinit var inputHint: TextView
     private lateinit var prefs: AppPrefs
     private lateinit var shake: ShakeDetector
     private var onboarding: androidx.appcompat.app.AlertDialog? = null
@@ -109,6 +111,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     // Main-thread state.
     private var connected = false
     private var hasPicture = false
+    private var macInputAvailable: Boolean? = null
     private var nightMode = 0
     @Volatile private var blockingMessage: String? = null
 
@@ -251,14 +254,21 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
 
     override fun onStart() {
         super.onStart()
-        // Back on the receiver screen: a cast started from it must not keep
-        // running, or the Mac could dial this phone while it dials the Mac.
-        stopService(Intent(this, app.opendisplay.android.sender.SenderService::class.java))
-        server.start()
-        advertiser.register(DeviceIdentity.serviceName(this), installId)
+        // A cast is a foreground session and outlives this screen. Only
+        // openSender stops an old one before starting a new cast.
+        syncReceiverMode()
         refreshIdle()
         // Launched by the attach intent, or attached while we were away.
         takeAccessory()
+    }
+
+    /** Casting and receiving are mutually exclusive: while the sender owns
+     *  the network session, this screen must not also advertise itself as a
+     *  receiver or the Mac can dial it back. */
+    private fun syncReceiverMode() {
+        if (app.opendisplay.android.sender.SenderService.casting) return
+        server.start()
+        advertiser.register(DeviceIdentity.serviceName(this), installId)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -365,6 +375,27 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         idleView = IdleView(this, uiKind(), { showSettings() }, ::openSender)
         root.addView(idleView, FrameLayout.LayoutParams(MATCH, MATCH))
 
+        inputHint = TextView(this).apply {
+            setText(R.string.receiver_mac_input_unavailable)
+            setTextColor(Color.BLACK)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+            background = GradientDrawable().apply {
+                cornerRadius = dp(14).toFloat()
+                setColor(ContextCompat.getColor(context, R.color.od_warning))
+            }
+            elevation = dp(4).toFloat()
+            isClickable = false
+            isFocusable = false
+            visibility = View.GONE
+        }
+        root.addView(inputHint, FrameLayout.LayoutParams(MATCH, WRAP).apply {
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            topMargin = dp(42)
+            leftMargin = dp(16)
+            rightMargin = dp(16)
+        })
+
         statsText = TextView(this).apply {
             setTextColor(Color.WHITE)
             setBackgroundColor(Color.argb(150, 0, 0, 0))
@@ -393,6 +424,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     private fun refreshIdle() {
         val streaming = connected && hasPicture && !senderAsleep && blockingMessage == null
         idleView.visibility = if (streaming || (connected && senderAsleep)) View.GONE else View.VISIBLE
+        inputHint.visibility = if (streaming && macInputAvailable == false) View.VISIBLE else View.GONE
         statsText.visibility = if (streaming && prefs.showAnalytics) View.VISIBLE else View.GONE
         blank.visibility = if (connected && senderAsleep) View.VISIBLE else View.GONE
         cursorView.visibility = if (streaming) View.VISIBLE else View.INVISIBLE
@@ -587,6 +619,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         main.post {
             connected = true
             hasPicture = false
+            macInputAvailable = null
             // The first valid connection retires the onboarding for good (iOS).
             prefs.hasConnectedBefore = true
             onboarding?.dismiss()
@@ -603,6 +636,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         main.post {
             connected = false
             hasPicture = false
+            macInputAvailable = null
             cursorView.clear()
             refreshIdle()
         }
@@ -655,6 +689,13 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
                 blockingMessage = getString(R.string.update_sender)
                 refreshIdle()
             }
+        }
+    }
+
+    override fun onInputState(enabled: Boolean) {
+        main.post {
+            macInputAvailable = enabled
+            refreshIdle()
         }
     }
 

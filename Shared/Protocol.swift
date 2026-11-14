@@ -38,6 +38,7 @@ enum WireMessage {
     static let sleeping = "sleeping"                // phone -> Mac: device locked, reconnect on wake
     static let closing = "closing"                  // phone -> Mac: app quit, end the session for good
     static let streamConfig = "streamConfig"        // Mac -> receiver: selected video operating point
+    static let inputState = "inputState"            // Mac -> receiver: touch injection available
     static let power = "power"                      // Mac -> receiver: shut down (PROTOCOL.md 6.6)
 }
 

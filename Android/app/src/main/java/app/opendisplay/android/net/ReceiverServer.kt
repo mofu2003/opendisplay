@@ -49,6 +49,8 @@ class ReceiverServer(
         fun onCursorImage(png: ByteArray, nw: Double, nh: Double, ax: Double, ay: Double)
         fun onSenderSleeping()
         fun onSenderVersion(pv: Int)
+        /** The Mac reports whether it can inject touches right now. */
+        fun onInputState(enabled: Boolean) {}
         fun onUpdateRequired(message: String, store: String?)
         fun onSenderHealth(obj: JSONObject)
         /** Receiver-side telemetry for the sender's log, every ~5 s. */
@@ -328,6 +330,7 @@ class ReceiverServer(
                 senderPv = pv
                 listener.onSenderVersion(pv)
             }
+            "inputState" -> listener.onInputState(obj.optBoolean("enabled", true))
             "streamConfig" -> {
                 val token = obj.optString("codec", "h264").lowercase()
                 listener.onStreamConfig(Codec.fromWire(token), token,

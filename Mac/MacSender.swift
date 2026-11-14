@@ -405,10 +405,13 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
             // new fields and retain the existing H.264 behavior.
             let info = try await waitForHello()
             let content = try await SCShareableContent.current
-            guard let display = content.displays.first else {
+            guard let display = Self.mirrorDisplay(in: content) else {
                 throw NSError(domain: "MacSender", code: 1,
                               userInfo: [NSLocalizedDescriptionKey: "no displays found"])
             }
+            // Mirror has no virtual display: fingers on the receiver map onto
+            // this Mac's own screen, the same display being captured.
+            inputInjector = InputInjector(displayID: display.displayID)
             // SCDisplay.width/height are POINTS. Capturing at points on a
             // Retina panel discards half the raster before the encoder ever
             // sees it, and no quality setting can bring it back — read the
@@ -419,6 +422,11 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
             try await startCapture(display: display,
                                    sourcePixelsWide: pixelsW, sourcePixelsHigh: pixelsH,
                                    receiver: info)
+            if !AXIsProcessTrusted() {
+                _ = InputInjector.ensureAccessibilityPermission()
+                await status(String(localized: "Mirroring — grant Accessibility for touch input"))
+                watchForAccessibility()
+            }
 
         case .extend:
             // awaitingWake is queue-confined — read it there before surfacing.
@@ -931,10 +939,11 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
                 switch mode {
                 case .mirror:
                     let content = try await SCShareableContent.current
-                    guard let display = content.displays.first else {
+                    guard let display = Self.mirrorDisplay(in: content) else {
                         throw NSError(domain: "MacSender", code: 1,
                                       userInfo: [NSLocalizedDescriptionKey: "no display found"])
                     }
+                    inputInjector = InputInjector(displayID: display.displayID)
                     let displayMode = CGDisplayCopyDisplayMode(display.displayID)
                     try await startCapture(
                         display: display,
@@ -1402,6 +1411,30 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
         await status(mode == .extend
             ? String(localized: "Extending to \(kind) (\(pixelsWide)×\(pixelsHigh))")
             : String(localized: "Mirroring to \(kind) (\(pixelsWide)×\(pixelsHigh))"))
+    }
+
+    /// Mirror mode always shows the Mac's own main display. `SCShareableContent`
+    /// does not promise an ordering, and an extend-mode display can still be
+    /// present while a session is being rebuilt.
+    private static func mirrorDisplay(in content: SCShareableContent) -> SCDisplay? {
+        content.displays.first(where: { CGDisplayIsMain($0.displayID) != 0 })
+            ?? content.displays.first
+    }
+
+    /// Accessibility can be granted while the session is already streaming.
+    /// Keep watching so touch starts working immediately, and tell the
+    /// receiver to replace its "input unavailable" banner.
+    private func watchForAccessibility() {
+        Task { [weak self] in
+            guard let self else { return }
+            while !AXIsProcessTrusted() {
+                try? await Task.sleep(for: .seconds(1))
+                if self.stopped { return }
+            }
+            Log.info("Accessibility permission granted — touch input live")
+            self.queue.async { self.sendInputState() }
+            await self.status(String(localized: "Mirroring — touch input ready"))
+        }
     }
 
     func stop() {
@@ -3235,6 +3268,16 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
     /// receiver version we still support.
     private func sendWelcome() {
         sendJSONFrame("{\"type\":\"\(WireMessage.welcome)\",\"pv\":\(WireProtocol.version),\"min\":\(WireProtocol.minSupportedPeer)}")
+        sendInputState()
+    }
+
+    /// Mirrors of this Mac can only inject touches while Accessibility is
+    /// trusted. Sending the state separately is additive: older receivers
+    /// ignore an unknown control type. It is re-sent when the permission
+    /// changes, so the tablet can replace its banner without reconnecting.
+    private func sendInputState() {
+        let enabled = AXIsProcessTrusted()
+        sendJSONFrame("{\"type\":\"\(WireMessage.inputState)\",\"enabled\":\(enabled)}")
     }
 
     /// Announce the operating point before video. Legacy receivers ignore the

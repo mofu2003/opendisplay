@@ -431,6 +431,7 @@ section 4.
 | `cursor` | pv 1 | `x`?, `y`?, `v` | Cursor position/visibility |
 | `cursorImg` | pv 1 | `nw`, `nh`, `ax`, `ay`, `png` | Cursor sprite |
 | `welcome` | pv 2 | `pv`, `min` | Sender's side of the version handshake |
+| `inputState` | pv 4 (additive) | `enabled` | Whether the sender can inject touch input |
 | `updateRequired` | pv 2 | `target`, `store`, `message` | Peer must update to continue |
 | `streamConfig` | pv 3 (additive) | `codec`, `width`, `height`, `framesPerSecond` | Selected video operating point |
 | `power` | pv 3 (additive) | `action` | Ask the receiver to power off (6.6) |
@@ -553,6 +554,13 @@ still supports). Sent in response to every `hello`. A receiver whose own
 only party that can detect an outdated sender and SHOULD tell its user to
 update the sender. A receiver that never gets a `welcome` at all is talking
 to a pre-pv-2 sender and MUST assume sender `pv` 1.
+
+**`inputState`**: sent immediately after every `welcome` and again whenever
+the sender's ability to inject touch input changes. `enabled: false` means
+video still works but taps and typing cannot reach the sender (for example,
+macOS Accessibility permission is missing). Receivers SHOULD show a
+non-blocking hint rather than stopping the stream. Older receivers ignore
+this additive control message.
 
 **`updateRequired`**: the sender declares the pairing unsupported until the
 receiver updates. `target` names the end that must act (`"ios"` today),

@@ -63,6 +63,8 @@
 "Failed: %@" = "失败：%@";
 "Screen Recording permission needed — see Permissions below" = "需要屏幕录制权限，请查看下方权限设置";
 "Extending — grant Accessibility for touch input" = "正在扩展屏幕，请授予辅助功能权限以使用触控";
+"Mirroring — grant Accessibility for touch input" = "正在镜像屏幕，请授予辅助功能权限以使用触控";
+"Mirroring — touch input ready" = "镜像触控已就绪";
 "Preparing virtual display…" = "正在准备虚拟显示器…";
 "Display blocked by saved macOS state — trying a fresh identity…" = "macOS 保存的状态阻止显示器启动，正在尝试新的显示器标识…";
 "Capture could not be restarted" = "无法重新启动屏幕采集";
