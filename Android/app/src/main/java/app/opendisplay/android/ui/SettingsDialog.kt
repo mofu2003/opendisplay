@@ -33,6 +33,7 @@ class SettingsDialog : DialogFragment() {
         val uiKind: String
         fun onNameChanged(name: String?)
         fun onOverlayChanged(enabled: Boolean)
+        fun checkForUpdates(manual: Boolean)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -162,9 +163,17 @@ class SettingsDialog : DialogFragment() {
 
             screen.category(R.string.section_about) {
                 addPreference(info(R.string.row_version, versionName()))
-                addPreference(link(R.string.link_website, "https://opendisplay.app", null))
-                addPreference(link(R.string.link_github, "https://github.com/mofu2003/opendisplay", null))
-                addPreference(link(R.string.link_kofi, "https://ko-fi.com/peetzweg", null))
+                addPreference(Preference(ctx).apply {
+                    title = getString(R.string.check_for_updates)
+                    summary = getString(R.string.check_for_updates_summary)
+                    isIconSpaceReserved = false
+                    setOnPreferenceClickListener {
+                        host.checkForUpdates(manual = true)
+                        true
+                    }
+                })
+                addPreference(link(R.string.link_github,
+                    "https://github.com/mofu2003/opendisplay", null))
             }
         }
 

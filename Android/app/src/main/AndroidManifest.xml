@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Sideloaded APK self-updates still require the system installer UI. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Wired from a Mac without adb: Android Open Accessory (AOA). -->
     <uses-feature android:name="android.hardware.usb.accessory" android:required="false" />
 
@@ -58,5 +60,14 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updateprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_paths" />
+        </provider>
     </application>
 </manifest>

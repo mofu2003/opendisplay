@@ -1,6 +1,7 @@
 package app.opendisplay.android.ui
 
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.content.BroadcastReceiver
@@ -31,6 +32,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import app.opendisplay.android.R
 import app.opendisplay.android.net.AccessoryLink
 import app.opendisplay.android.net.Advertiser
@@ -43,10 +45,12 @@ import app.opendisplay.android.protocol.PenInput
 import app.opendisplay.android.protocol.TouchGestures
 import app.opendisplay.android.protocol.VideoCap
 import app.opendisplay.android.protocol.WireProtocol
+import app.opendisplay.android.update.UpdateManager
 import app.opendisplay.android.video.DecoderCaps
 import app.opendisplay.android.video.StreamStats
 import app.opendisplay.android.video.VideoDecoder
 import org.json.JSONObject
+import java.io.File
 import kotlin.math.roundToInt
 
 /**
@@ -67,7 +71,10 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     private lateinit var prefs: AppPrefs
     private lateinit var shake: ShakeDetector
     private var onboarding: androidx.appcompat.app.AlertDialog? = null
-
+    private lateinit var updates: UpdateManager
+    private var updateDialog: AlertDialog? = null
+    private var downloadDialog: AlertDialog? = null
+    private var pendingUpdateFile: File? = null
     private lateinit var server: ReceiverServer
     private lateinit var advertiser: Advertiser
     private lateinit var decoder: VideoDecoder
@@ -120,6 +127,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         nightMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
         Log.init(this)
         prefs = AppPrefs(this)
+        updates = UpdateManager(this, updateListener)
         shake = ShakeDetector(this) { showSettings() }
         installId = DeviceIdentity.installId(this)
         wifiLock = createWifiLock()
@@ -155,6 +163,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
             IntentFilter(ACTION_USB_PERMISSION), ContextCompat.RECEIVER_NOT_EXPORTED)
         updatePanel()
         main.post(statsTick)
+        main.postDelayed({ maybeCheckForUpdates() }, 2_000)
         // First run: OpenDisplay is two apps; say so until the first connection.
         if (!prefs.hasConnectedBefore && !prefs.onboardingDismissed) showOnboarding()
     }
@@ -162,6 +171,12 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     override fun onResume() {
         super.onResume()
         shake.start()
+        pendingUpdateFile?.let { file ->
+            if (Build.VERSION.SDK_INT < 26 || packageManager.canRequestPackageInstalls()) {
+                pendingUpdateFile = null
+                updates.install(file)
+            }
+        }
     }
 
     override fun onPause() {
@@ -252,6 +267,10 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
 
     override fun onOverlayChanged(enabled: Boolean) = refreshIdle()
 
+    override fun checkForUpdates(manual: Boolean) {
+        updates.check(manual)
+    }
+
     override fun onStart() {
         super.onStart()
         // A cast is a foreground session and outlives this screen. Only
@@ -297,12 +316,103 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
 
     override fun onDestroy() {
         super.onDestroy()
+        if (::updates.isInitialized) updates.close()
         unregisterReceiver(accessoryDetached)
         unregisterReceiver(accessoryPermission)
         if (wifiLock.isHeld) wifiLock.release()
         main.removeCallbacksAndMessages(null)
         decoder.release()
     }
+
+    // region Update UI
+
+    private val updateListener = object : UpdateManager.Listener {
+        override fun onChecking(manual: Boolean) {
+            if (manual) Toast.makeText(this@MainActivity, R.string.update_checking, Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onUpToDate(manual: Boolean) {
+            prefs.lastUpdateCheck = System.currentTimeMillis()
+            if (manual) Toast.makeText(this@MainActivity, R.string.update_up_to_date, Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onUpdateAvailable(release: UpdateManager.Release, manual: Boolean) {
+            prefs.lastUpdateCheck = System.currentTimeMillis()
+            if (isFinishing || isDestroyed) return
+            updateDialog?.dismiss()
+            val notes = release.notes?.takeIf { it.isNotBlank() }?.let { "\n\n$it" } ?: ""
+            updateDialog = MaterialAlertDialogBuilder(this@MainActivity)
+                .setTitle(R.string.update_available_title)
+                .setMessage(getString(R.string.update_available_message, release.versionName, notes))
+                .setPositiveButton(R.string.update_now) { _, _ -> startUpdateDownload(release) }
+                .setNegativeButton(R.string.update_later, null)
+                .show()
+        }
+
+        override fun onDownloadProgress(release: UpdateManager.Release, downloaded: Long, total: Long) {
+            val text = if (total > 0) {
+                getString(R.string.update_progress, ((downloaded * 100) / total).toInt().coerceIn(0, 100))
+            } else {
+                getString(R.string.update_downloading)
+            }
+            downloadDialog?.setMessage(text)
+        }
+
+        override fun onDownloadReady(release: UpdateManager.Release, file: File) {
+            downloadDialog?.dismiss()
+            downloadDialog = null
+            if (isFinishing || isDestroyed) return
+            MaterialAlertDialogBuilder(this@MainActivity)
+                .setTitle(R.string.update_ready_title)
+                .setMessage(R.string.update_ready_message)
+                .setPositiveButton(R.string.update_install) { _, _ -> updates.install(file) }
+                .setNegativeButton(R.string.update_later, null)
+                .show()
+        }
+
+        override fun onInstallPermissionRequired(file: File) {
+            if (isFinishing || isDestroyed) return
+            pendingUpdateFile = file
+            MaterialAlertDialogBuilder(this@MainActivity)
+                .setTitle(R.string.update_permission_title)
+                .setMessage(R.string.update_permission_message)
+                .setPositiveButton(R.string.update_open_settings) { _, _ ->
+                    updates.openInstallPermissionSettings()
+                }
+                .setNegativeButton(R.string.update_cancel, null)
+                .show()
+        }
+
+        override fun onError(message: String, manual: Boolean) {
+            downloadDialog?.dismiss()
+            downloadDialog = null
+            if (!manual || isFinishing || isDestroyed) return
+            MaterialAlertDialogBuilder(this@MainActivity)
+                .setTitle(R.string.update_error_title)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+        }
+    }
+
+    private fun startUpdateDownload(release: UpdateManager.Release) {
+        downloadDialog?.dismiss()
+        downloadDialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.update_downloading)
+            .setMessage(getString(R.string.update_progress, 0))
+            .setCancelable(false)
+            .show()
+        updates.download(release, manual = true)
+    }
+
+    private fun maybeCheckForUpdates() {
+        if (isFinishing || isDestroyed || onboarding?.isShowing == true) return
+        val now = System.currentTimeMillis()
+        if (now - prefs.lastUpdateCheck < UPDATE_CHECK_INTERVAL_MS) return
+        updates.check(manual = false)
+    }
+
+    // endregion
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
@@ -776,6 +886,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     companion object {
         private const val TAG = "OpenDisplay"
         private const val ACTION_USB_PERMISSION = "app.opendisplay.android.USB_PERMISSION"
+        private const val UPDATE_CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000L
 
         /**
          * Locked or backgrounded: the sender keeps waiting for us to come

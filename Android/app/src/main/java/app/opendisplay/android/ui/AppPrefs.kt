@@ -18,6 +18,10 @@ class AppPrefs(context: Context) {
         get() = prefs.getBoolean("onboardingDismissed", false)
         set(v) = prefs.edit().putBoolean("onboardingDismissed", v).apply()
 
+    var lastUpdateCheck: Long
+        get() = prefs.getLong("lastUpdateCheck", 0L)
+        set(v) = prefs.edit().putLong("lastUpdateCheck", v).apply()
+
     companion object {
         const val FILE = "settings"
         const val KEY_SHOW_ANALYTICS = "showAnalytics"

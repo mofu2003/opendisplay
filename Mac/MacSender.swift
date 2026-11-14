@@ -3309,7 +3309,9 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
         let dict: [String: Any] = [
             "type": WireMessage.updateRequired,
             "target": isMac ? "mac" : "ios",
-            "store": isMac ? "https://opendisplay.app" : AppStore.updateURL.absoluteString,
+            "store": isMac
+                ? "https://github.com/mofu2003/opendisplay/releases/latest"
+                : AppStore.updateURL.absoluteString,
             "message": isMac
                 ? "The OpenDisplay Receiver app on that Mac is too old for this Mac. Use Check for Updates… there to reconnect."
                 : "This \(kind) app is too old for this Mac. Update OpenDisplay from the App Store to reconnect.",

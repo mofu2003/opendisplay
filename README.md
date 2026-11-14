@@ -538,14 +538,17 @@ Tracked as [roadmap issues](https://github.com/peetzweg/opendisplay/issues?q=is%
 
 Done: prebuilt releases, built-in USB connectivity (no helper tools), WiFi via Bonjour, portrait mode, touch + two-finger scroll, performance overlay, iPad support, multiple devices at once ([#8](https://github.com/peetzweg/opendisplay/issues/8) — every connected device becomes its own extended display), a Mac as the display ([#17](https://github.com/peetzweg/opendisplay/issues/17), WiFi or Thunderbolt/Ethernet cable).
 
-## Auto-update (macOS app)
+## Auto-update
+
+### macOS app
 
 The macOS app updates itself with [Sparkle](https://sparkle-project.org) —
 an open-source framework, **not** a hosted service. Update checks hit only
 our own infrastructure:
 
-- The app reads an **appcast** feed hosted on the landing-page site:
-  `https://opendisplay.app/appcast.xml` (`SUFeedURL` in `project.yml`).
+- The app reads the fork's **appcast** feed:
+  `https://raw.githubusercontent.com/mofu2003/opendisplay/main/public/appcast.xml`
+  (`SUFeedURL` in `project.yml`).
 - The release workflow (`.github/workflows/release.yml`, `build-mac` job)
   runs Sparkle's `generate_appcast` against the notarized `OpenDisplay.dmg`,
   signs it with the EdDSA key, commits the result to `public/appcast.xml`,
@@ -574,9 +577,18 @@ secret. To switch it on:
    appcast step in `release.yml` no-ops gracefully while this secret is
    absent, so releases keep working until you're ready.
 4. The **first appcast publishes on the next release** after both keys are
-   set. Confirm `https://opendisplay.app/appcast.xml` resolves, then **test
-   the full update flow on a real signed/notarized build** (check → download
-   → verify → relaunch) — this can't be validated in CI.
+   set. Confirm the raw GitHub appcast URL resolves, then **test the full
+   update flow on a real signed/notarized build** (check → download → verify
+   → relaunch) — this can't be validated in CI.
+
+### Android APK (this fork)
+
+The Android receiver checks `public/android-version.json` from this fork at
+launch and from **Settings → About → Check for updates**. It downloads the
+signed GitHub Release APK, verifies its SHA-256, and hands it to Android's
+package installer. Android always asks the user to confirm the install;
+since sideloaded APKs cannot self-replace silently, the automatic part ends
+at the system prompt. `Android/README.md` documents the release steps.
 
 ## Contributing
 

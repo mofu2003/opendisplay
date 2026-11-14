@@ -55,6 +55,23 @@ cd Android
 The debug build installs as `com.peetzweg.opendisplay.debug` ("OpenDisplay
 Dev") next to a release build.
 
+## Auto-update
+
+Sideloaded release APKs check
+`public/android-version.json` in the `mofu2003/opendisplay` fork at launch
+(at most once every six hours) and from **Settings → About → Check for
+updates**. The manifest points at the signed `OpenDisplay-Android.apk` asset
+on a GitHub Release.
+
+The app downloads into its cache, verifies the manifest's SHA-256, then opens
+Android's package installer. Android always shows the final install prompt;
+silent self-replacement is not permitted. On Android 8 and newer the user
+must also allow **Install unknown apps** for OpenDisplay once.
+
+After publishing a new APK, update `versionCode`, `versionName`, `apkUrl`,
+`sha256`, and `notes` in `public/android-version.json`. Keep the signing key
+stable or Android will reject the upgrade.
+
 ## Connecting
 
 **Wi-Fi:** open the app on the Android device and pick it in the Mac app.

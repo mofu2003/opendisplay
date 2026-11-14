@@ -45,7 +45,7 @@ enum AOA {
         "OpenDisplay Receiver",         // model
         "Second display over USB",      // description
         "1",                            // version
-        "https://opendisplay.app",      // URI
+        "https://github.com/mofu2003/opendisplay", // URI
         "1",                            // serial
     ]
 
