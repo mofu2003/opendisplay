@@ -3,6 +3,6 @@
   "versionCode": 6,
   "versionName": "1.30.3-zh.5",
   "apkUrl": "https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.5/OpenDisplay-Android.apk",
-  "sha256": "a2bd74040edb444645e0f8e5ad36587e3ba92e83478e7c48e51a389f58eb30d7",
+  "sha256": "6148c62faab8ac41a2b990b9c45f6d5a6d18d975e5dd9fcc9370bb0351d31d57",
   "notes": "新增安卓端启动时自动检查更新、设置页手动检查更新，并对下载的 APK 进行 SHA-256 校验。关于页已移除上游推广和打赏入口。"
 }

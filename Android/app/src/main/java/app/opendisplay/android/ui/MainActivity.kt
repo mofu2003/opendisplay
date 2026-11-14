@@ -379,7 +379,9 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
                 .setPositiveButton(R.string.update_open_settings) { _, _ ->
                     updates.openInstallPermissionSettings()
                 }
-                .setNegativeButton(R.string.update_cancel, null)
+                .setNegativeButton(R.string.update_cancel) { _, _ ->
+                    pendingUpdateFile = null
+                }
                 .show()
         }
 
