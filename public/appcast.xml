@@ -1,12 +1,16 @@
 <?xml version="1.0" standalone="yes"?>
-<!-- Fork feed. The release workflow replaces this file with a signed
-     appcast whenever mofu2003/opendisplay publishes a release. Until then
-     it deliberately advertises no update, so the upstream app can never
-     overwrite this fork. -->
 <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
         <title>OpenDisplay (mofu2003 fork)</title>
         <link>https://github.com/mofu2003/opendisplay</link>
         <description>OpenDisplay fork releases</description>
+        <item>
+            <title>1.30.3-zh.4</title>
+            <pubDate>Sun, 15 Nov 2026 04:54:38 +0800</pubDate>
+            <sparkle:version>5</sparkle:version>
+            <sparkle:shortVersionString>1.30.3-zh.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.4/OpenDisplay-1.30.3-zh.4.zip" length="2506422" type="application/octet-stream" sparkle:edSignature="qMnnfjY9vS4xbb4HMm6qTSWcNwumhf5QWjUoPw6y1Z5dnr2ENMLiv1Kx8hXQWUJwvEJBKJKX46LdxMq1W7EUDg=="/>
+        </item>
     </channel>
 </rss>
