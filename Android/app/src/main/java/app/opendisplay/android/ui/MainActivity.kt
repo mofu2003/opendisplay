@@ -194,7 +194,8 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     }
 
     /** "phone" / "tablet" for UI text, like iOS's iPhone / iPad. */
-    private fun uiKind() = DeviceIdentity.deviceKind(this).removePrefix("Android ")
+    private fun uiKind() = getString(if (resources.configuration.smallestScreenWidthDp >= 600)
+        R.string.device_tablet else R.string.device_phone)
 
     private fun showSettings() {
         if (supportFragmentManager.findFragmentByTag(SETTINGS) != null) return

@@ -10,9 +10,9 @@ enum AppPresentation: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .menuBar: return "Menu bar"
-        case .dock: return "Dock"
-        case .background: return "Background only"
+        case .menuBar: return String(localized: "Menu bar")
+        case .dock: return String(localized: "Dock")
+        case .background: return String(localized: "Background only")
         }
     }
 }
@@ -119,7 +119,7 @@ final class DeviceSession: ObservableObject, Identifiable {
     let name: String
     let sender: MacSender
 
-    @Published var status = "Starting…"
+    @Published var status = String(localized: "Starting…")
     @Published var framesSent = 0
     // The sender's start() threw: the pipeline is freed, only this row's
     // error text remains. A failed session must never swallow a fresh
@@ -649,10 +649,13 @@ final class SenderController: ObservableObject {
             if let device = usbDevices.first(where: { $0.udid == udid }), let name = device.name {
                 return name
             }
-            if udid == nil { return "Manual (\(host):\(port))" }
-            return udid.flatMap(AOA.serial(fromUDID:)) == nil ? "iPhone / iPad" : "Android device"
+            if udid == nil {
+                return String(format: NSLocalizedString("Manual (%@:%@)", comment: ""), host, port)
+            }
+            return udid.flatMap(AOA.serial(fromUDID:)) == nil
+                ? String(localized: "iPhone / iPad") : String(localized: "Android device")
         case .wifi(let result):
-            return serviceName(of: result) ?? "WiFi device"
+            return serviceName(of: result) ?? String(localized: "WiFi device")
         }
     }
 
@@ -1172,9 +1175,7 @@ struct ContentView: View {
                 Circle()
                     .fill(controller.running ? .green : .secondary.opacity(0.5))
                     .frame(width: 9, height: 9)
-                Text(controller.running
-                     ? "\(controller.sessions.count) device\(controller.sessions.count == 1 ? "" : "s") connected"
-                     : "Idle")
+                Text(connectionSummary)
                     .font(.callout)
                     .lineLimit(1)
                 Spacer()
@@ -1196,6 +1197,13 @@ struct ContentView: View {
         .frame(width: 440, height: 540)
     }
 
+    private var connectionSummary: LocalizedStringKey {
+        guard controller.running else { return "Idle" }
+        return controller.sessions.count == 1
+            ? "1 device connected"
+            : "\(controller.sessions.count) devices connected"
+    }
+
     @ViewBuilder
     private func permissionRow(_ title: String, granted: Bool, uncertain: Bool = false,
                                help: String, anchor: String,
@@ -1205,9 +1213,9 @@ struct ContentView: View {
                             : granted ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .foregroundStyle(uncertain ? .orange : granted ? .green : .red)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                 if uncertain || !granted {
-                    Text(help)
+                    Text(LocalizedStringKey(help))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -1239,10 +1247,12 @@ struct SessionRow: View {
 
     private var statusColor: Color {
         if session.status.hasPrefix("Extending") || session.status.hasPrefix("Mirroring")
-            || session.status.hasPrefix("Connected") {
+            || session.status.hasPrefix("Connected") || session.status.hasPrefix("正在扩展")
+            || session.status.hasPrefix("正在镜像") || session.status.hasPrefix("已连接") {
             return .green
         }
-        if session.status.hasPrefix("Failed") || session.status.contains("stopped") {
+        if session.status.hasPrefix("Failed") || session.status.contains("stopped")
+            || session.status.hasPrefix("失败") || session.status.contains("已停止") {
             return .red
         }
         return .orange

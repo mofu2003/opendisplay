@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="device_phone">phone</string>
+    <string name="device_tablet">tablet</string>
     <!-- Mirrors the iOS receiver's copy (iOS/OpenSidecarPhoneApp.swift). -->
     <string name="title">OpenDisplay</string>
     <string name="status_ready">Ready to connect</string>
