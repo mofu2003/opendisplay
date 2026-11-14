@@ -1,8 +1,8 @@
 {
   "_comment": "Android sideload update manifest for the mofu2003 fork. Update this after publishing a signed APK.",
-  "versionCode": 6,
-  "versionName": "1.30.3-zh.5",
-  "apkUrl": "https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.5/OpenDisplay-Android.apk",
-  "sha256": "ded840f80a9628bb26f65081ec7c451f316ffba98556ea5dc3291dcb0c7231e4",
-  "notes": "新增安卓端启动时自动检查更新、设置页手动检查更新，并对下载的 APK 进行 SHA-256 校验。关于页已移除上游推广和打赏入口。"
+  "versionCode": 7,
+  "versionName": "1.30.3-zh.6",
+  "apkUrl": "https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.6/OpenDisplay-Android.apk",
+  "sha256": "e0ba05aab1c0503326e8f022b5364a0a530751b2f3cb2cb0d5fb0a8bbdcd6216",
+  "notes": "新增远程输入法支持：从 Mac 点击安卓输入框时会弹出系统键盘，可继续用 Mac 直接输入，也可以点击安卓屏幕键盘输入。"
 }

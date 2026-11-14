@@ -74,6 +74,7 @@ class SenderSession(
             val height = ((metrics.heightPixels * scale).toInt() / 2) * 2
 
             val sink = SenderSink(output)
+            InputAccessibilityService.instance?.setRemoteInputActive(true)
             sink.json(JSONObject().put("type", "welcome").put("pv", 4).put("min", 1))
             sink.json(JSONObject().apply {
                 put("type", "streamConfig")
@@ -146,6 +147,7 @@ class SenderSession(
     private fun finish() {
         if (finished) return
         finished = true
+        InputAccessibilityService.instance?.setRemoteInputActive(false)
         stop()
         onFinished()
     }

@@ -6,11 +6,15 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Path
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.inputmethod.InputMethodManager
 
 /**
  * Injects the Mac's pointer and keyboard into whichever app has focus.
@@ -20,6 +24,9 @@ import android.view.accessibility.AccessibilityNodeInfo
 class InputAccessibilityService : AccessibilityService() {
 
     companion object {
+        @Volatile
+        private var remoteInputRequested = false
+
         @Volatile
         var instance: InputAccessibilityService? = null
             private set
@@ -36,12 +43,16 @@ class InputAccessibilityService : AccessibilityService() {
     private var downX = 0.0
     private var downY = 0.0
     private var moved = false
+    private val main = Handler(Looper.getMainLooper())
+    @Volatile private var remoteInputActive = false
 
     override fun onServiceConnected() {
         instance = this
+        applyKeyboardMode(remoteInputRequested)
     }
 
     override fun onDestroy() {
+        applyKeyboardMode(false)
         if (instance === this) instance = null
         super.onDestroy()
     }
@@ -65,9 +76,23 @@ class InputAccessibilityService : AccessibilityService() {
                 val ex = (x * metrics.widthPixels).toFloat()
                 val ey = (y * metrics.heightPixels).toFloat()
                 val distance = Math.hypot((ex - sx).toDouble(), (ey - sy).toDouble())
-                if (moved || distance > 12.0) swipe(sx, sy, ex, ey) else tap(sx, sy)
+                if (moved || distance > 12.0) {
+                    swipe(sx, sy, ex, ey)
+                } else {
+                    tap(sx, sy)
+                    // The tap may have focused an EditText. Give the target
+                    // app a beat to move input focus, then let Android show
+                    // its own IME (including a hardware-keyboard layout).
+                    main.postDelayed({ showImeIfEditable() }, 140)
+                }
             }
         }
+    }
+
+    /** Called by SenderSession while a Mac is controlling this device. */
+    fun setRemoteInputActive(active: Boolean) {
+        remoteInputRequested = active
+        main.post { applyKeyboardMode(active) }
     }
 
     fun typeText(text: String) {
@@ -75,7 +100,10 @@ class InputAccessibilityService : AccessibilityService() {
         val node = editableFocus()
         if (node != null) {
             val old = node.text?.toString().orEmpty()
-            if (setText(node, old + text)) return
+            if (setText(node, old + text)) {
+                requestIme(node)
+                return
+            }
         }
         paste(text)
     }
@@ -103,6 +131,36 @@ class InputAccessibilityService : AccessibilityService() {
             }
             "escape" -> performGlobalAction(GLOBAL_ACTION_BACK)
         }
+        if (key != "escape") requestIme(node)
+    }
+
+    private fun applyKeyboardMode(active: Boolean) {
+        remoteInputActive = active
+        if (Build.VERSION.SDK_INT < 24) return
+        val mode = when {
+            !active -> AccessibilityService.SHOW_MODE_AUTO
+            Build.VERSION.SDK_INT >= 29 -> AccessibilityService.SHOW_MODE_IGNORE_HARD_KEYBOARD
+            else -> AccessibilityService.SHOW_MODE_AUTO
+        }
+        softKeyboardController?.setShowMode(mode)
+    }
+
+    private fun showImeIfEditable() {
+        if (!remoteInputActive) return
+        val node = editableFocus() ?: return
+        requestIme(node)
+    }
+
+    private fun requestIme(node: AccessibilityNodeInfo?) {
+        if (!remoteInputActive || node == null) return
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        if (imm?.isAcceptingText == true) return
+
+        node.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+        node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+        val bounds = Rect()
+        node.getBoundsInScreen(bounds)
+        if (!bounds.isEmpty) tap(bounds.exactCenterX(), bounds.exactCenterY())
     }
 
     private fun editableFocus(): AccessibilityNodeInfo? {
