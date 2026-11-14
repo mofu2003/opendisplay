@@ -308,6 +308,8 @@ Coordinates use the conventions of section 7.
 | `scroll` | pv 1 | `dx`, `dy` | Two-finger scroll |
 | `pencil` | pv 3 | `phase`, `x`, `y`, `pressure`, `azimuth`, `altitude`, `rotation`, `t`? | Stylus input |
 | `proximity` | pv 3 | `entering`, `x`, `y` | Stylus hover enter/leave |
+| `text` | pv 4 | `text` | Typed Unicode text for the focused field |
+| `key` | pv 4 | `key` | Named non-text key: `backspace`, `enter`, `tab`, `escape` |
 | `kf` | pv 1 | none | Request an IDR (section 5.3) |
 | `stats` | pv 1 | free-form | Receiver-side telemetry for the sender's log |
 | `sleeping` | pv 2 | none | Device locked; session ends, reconnect on wake expected |
@@ -392,6 +394,12 @@ is up is a hover move.
 
 **`proximity`** (pv 3) carries `entering` (bool) and the normalized `x`,
 `y` where the stylus entered or left hover range.
+
+**`text` and `key`** (pv 4) let a receiving Mac drive an Android sender's
+focused field. `text` carries a string to append to the focused editable
+field (or paste when no editable node is focused). `key` carries one of
+`backspace`, `enter`, `tab`, or `escape`. Senders that predate pv 4 ignore
+both types, so the receiver keeps working as a display.
 
 **Pencil fallback (normative):** a receiver MUST NOT send `pencil` or
 `proximity` to a sender whose `pv` is below 3; it MUST degrade the stylus

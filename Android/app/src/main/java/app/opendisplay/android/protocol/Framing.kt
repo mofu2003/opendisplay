@@ -53,6 +53,21 @@ object Framing {
         System.arraycopy(payload, 0, out, 4, n)
         return out
     }
+
+    /** Sender-to-receiver video frames may exceed the 1 MiB control limit. */
+    fun encodeVideo(payload: ByteArray): ByteArray {
+        require(payload.isNotEmpty() && payload.size <= MAX_INBOUND_PAYLOAD) {
+            "video payload must be 1..$MAX_INBOUND_PAYLOAD bytes, was ${payload.size}"
+        }
+        val out = ByteArray(4 + payload.size)
+        val n = payload.size
+        out[0] = (n ushr 24).toByte()
+        out[1] = (n ushr 16).toByte()
+        out[2] = (n ushr 8).toByte()
+        out[3] = n.toByte()
+        System.arraycopy(payload, 0, out, 4, n)
+        return out
+    }
 }
 
 /**

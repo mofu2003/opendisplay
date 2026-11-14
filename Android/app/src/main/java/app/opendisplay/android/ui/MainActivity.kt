@@ -188,7 +188,8 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         val index = root.indexOfChild(idleView)
         val visibility = idleView.visibility
         root.removeView(idleView)
-        idleView = IdleView(this, uiKind()) { showSettings() }.apply { this.visibility = visibility }
+        idleView = IdleView(this, uiKind(), { showSettings() }, ::openSender)
+            .apply { this.visibility = visibility }
         root.addView(idleView, index, FrameLayout.LayoutParams(MATCH, MATCH))
         refreshIdle()
     }
@@ -196,6 +197,16 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     /** "phone" / "tablet" for UI text, like iOS's iPhone / iPad. */
     private fun uiKind() = getString(if (resources.configuration.smallestScreenWidthDp >= 600)
         R.string.device_tablet else R.string.device_phone)
+
+    /**
+     * Hand the screen over to the sender. Stop listening first so this phone
+     * is not advertised as a receiver while it is casting to the Mac.
+     */
+    private fun openSender() {
+        stopService(Intent(this, app.opendisplay.android.sender.SenderService::class.java))
+        pauseReceiver()
+        startActivity(Intent(this, app.opendisplay.android.sender.SenderActivity::class.java))
+    }
 
     private fun showSettings() {
         if (supportFragmentManager.findFragmentByTag(SETTINGS) != null) return
@@ -243,6 +254,9 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
 
     override fun onStart() {
         super.onStart()
+        // Back on the receiver screen: a cast started from it must not keep
+        // running, or the Mac could dial this phone while it dials the Mac.
+        stopService(Intent(this, app.opendisplay.android.sender.SenderService::class.java))
         server.start()
         advertiser.register(DeviceIdentity.serviceName(this), installId)
         refreshIdle()
@@ -262,6 +276,11 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     override fun onStop() {
         super.onStop()
         main.removeCallbacks(resendHello)
+        pauseReceiver()
+    }
+
+    /** Stop listening and advertising, ending any session with a courtesy message. */
+    private fun pauseReceiver() {
         advertiser.unregister()
         val power = getSystemService(POWER_SERVICE) as android.os.PowerManager
         val keyguard = getSystemService(KEYGUARD_SERVICE) as android.app.KeyguardManager
@@ -346,7 +365,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         }
         root.addView(blank, FrameLayout.LayoutParams(MATCH, MATCH))
 
-        idleView = IdleView(this, uiKind()) { showSettings() }
+        idleView = IdleView(this, uiKind(), { showSettings() }, ::openSender)
         root.addView(idleView, FrameLayout.LayoutParams(MATCH, MATCH))
 
         statsText = TextView(this).apply {

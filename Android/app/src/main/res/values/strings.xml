@@ -2,6 +2,23 @@
 <resources>
     <string name="device_phone">phone</string>
     <string name="device_tablet">tablet</string>
+    <string name="sender_open">Cast to Mac</string>
+    <string name="sender_title">Cast to Mac</string>
+    <string name="sender_host">Mac address</string>
+    <string name="sender_port">Port</string>
+    <string name="sender_search">Find Mac</string>
+    <string name="sender_start">Start casting</string>
+    <string name="sender_stop">Stop casting</string>
+    <string name="sender_accessibility">Enable input control</string>
+    <string name="sender_hint">On the Mac, open OpenDisplay and turn on \"Use this Mac as a display\". Both devices must be on the same WiFi.</string>
+    <string name="sender_searching">Searching for a Mac…</string>
+    <string name="sender_not_found">No Mac found. Enter its address manually.</string>
+    <string name="sender_not_mac">That device is not a Mac receiver.</string>
+    <string name="sender_no_accessibility">Accessibility is off: the screen is visible, but taps and typing won\'t work.</string>
+    <string name="sender_starting">Starting…</string>
+    <string name="sender_active">Casting. Keep this app open.</string>
+    <string name="sender_stopped">Stopped.</string>
+    <string name="sender_error">Could not start: %1$s</string>
     <!-- Mirrors the iOS receiver's copy (iOS/OpenSidecarPhoneApp.swift). -->
     <string name="title">OpenDisplay</string>
     <string name="status_ready">Ready to connect</string>

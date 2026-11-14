@@ -166,7 +166,7 @@ class HelloTest {
         )
         val json = JSONObject(hello.toString())
         assertEquals("hello", json.getString("type"))
-        assertEquals(3, json.getInt("pv"))
+        assertEquals(WireProtocol.VERSION, json.getInt("pv"))
         assertEquals(1080, json.getJSONObject("panel").getInt("pixelsWide"))
         assertEquals(2.625, json.getJSONObject("panel").getDouble("scale"), 0.0)
         assertEquals(2424, json.getInt("pixelsHigh"))

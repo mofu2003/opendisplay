@@ -22,7 +22,8 @@ import com.google.android.material.color.MaterialColors
  * (logo, title, status dot, a card of hints, "Settings & Help", shake tip),
  * built from Material components in the system's light or dark theme.
  */
-class IdleView(context: Context, kind: String, onSettings: () -> Unit) : ScrollView(context) {
+class IdleView(context: Context, kind: String, onSettings: () -> Unit,
+               onSend: () -> Unit) : ScrollView(context) {
     private val dot = View(context)
     private val status = TextView(context)
 
@@ -72,6 +73,11 @@ class IdleView(context: Context, kind: String, onSettings: () -> Unit) : ScrollV
         column.addView(card, LinearLayout.LayoutParams(minOf(dp(420), screenWidth() - dp(32)), WRAP))
 
         column.addView(View(context), LinearLayout.LayoutParams(1, 0, 1f))
+        column.addView(MaterialButton(ContextThemeWrapper(context,
+            com.google.android.material.R.style.Widget_Material3_Button_TonalButton)).apply {
+            text = context.getString(R.string.sender_open)
+            setOnClickListener { onSend() }
+        }, LinearLayout.LayoutParams(WRAP, WRAP).apply { bottomMargin = dp(8) })
         column.addView(MaterialButton(ContextThemeWrapper(context,
             com.google.android.material.R.style.Widget_Material3_Button_TonalButton)).apply {
             text = context.getString(R.string.settings_and_help)

@@ -54,6 +54,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if presentation != .menuBar {
             MainWindow.show()
         }
+        if UserDefaults.standard.bool(forKey: "receiverEnabled") {
+            ReceiverController.shared.start()
+            SenderController.shared.dropSelfReceiver()
+        }
     }
 
     // Background/Dock modes: opening the app again (Spotlight, Finder, Dock
@@ -330,7 +334,11 @@ final class SenderController: ObservableObject {
         browser.browseResultsChangedHandler = { [weak self] results, _ in
             DispatchQueue.main.async {
                 guard let self else { return }
-                self.discovered = Array(results)
+                self.discovered = results.filter { result in
+                    guard ReceiverController.shared.active,
+                          let name = self.serviceName(of: result) else { return true }
+                    return name != self.localReceiverName
+                }
                 self.logDiscoveredReceivers()
                 self.endSessionsWhoseServiceVanished()
                 self.autoConnect()
@@ -945,6 +953,9 @@ final class SenderController: ObservableObject {
         for result in discovered {
             guard let name = serviceName(of: result), !mergedServices.contains(name)
             else { continue }
+            // The merged receiver advertises this same Mac; never offer it
+            // back as a remote device (auto-connect would dial ourselves).
+            if ReceiverController.shared.active, name == localReceiverName { continue }
             let target = ConnectionTarget.wifi(result)
             coveredSessionIDs.insert(target.sessionID)
             // A USB-identity session that failed over to WiFi serves this
@@ -963,6 +974,22 @@ final class SenderController: ObservableObject {
                                        usbTarget: nil, wifiTarget: nil))
         }
         return entries
+    }
+
+    private var localReceiverName: String {
+        UserDefaults.standard.string(forKey: "receiverName")
+            .flatMap { $0.isEmpty ? nil : $0 }
+            ?? Host.current().localizedName ?? "Mac"
+    }
+
+    /// Drop this Mac's own receiver from discovery and any session that was
+    /// opened to it before receiver mode was enabled.
+    func dropSelfReceiver() {
+        let local = localReceiverName
+        discovered.removeAll { serviceName(of: $0) == local }
+        for session in sessions where session.name == local {
+            disconnect(session)
+        }
     }
 
     func session(for entry: DeviceEntry) -> DeviceSession? {
@@ -1025,6 +1052,7 @@ final class PermissionMonitor: ObservableObject {
 
 struct ContentView: View {
     @ObservedObject var controller: SenderController
+    @ObservedObject private var displayReceiver = ReceiverController.shared
     @StateObject private var permissions = PermissionMonitor()
     // Optional so the view still compiles/previews without an updater (e.g.
     // if Sparkle ever fails to start); the button just disables itself then.
@@ -1089,6 +1117,27 @@ struct ContentView: View {
                                 }
                             }
                         }
+                    }
+                }
+
+                Section("Receive a screen") {
+                    Toggle("Use this Mac as a display", isOn: Binding(
+                        get: { displayReceiver.active },
+                        set: { on in
+                            UserDefaults.standard.set(on, forKey: "receiverEnabled")
+                            if on {
+                                displayReceiver.start()
+                                controller.dropSelfReceiver()
+                            } else {
+                                displayReceiver.stop()
+                            }
+                        }))
+                    if displayReceiver.active {
+                        Text(displayReceiver.connected
+                             ? "Connected — the video window opens automatically."
+                             : "Waiting for a device to connect…")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 

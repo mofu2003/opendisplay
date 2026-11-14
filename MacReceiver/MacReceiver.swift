@@ -293,6 +293,9 @@ final class ReceiverController: ObservableObject {
         // reconnect can arrive with new dimensions in the same window.
         if receiver.videoSize != .zero { window?.contentAspectRatio = receiver.videoSize }
         window?.makeKeyAndOrderFront(nil)
+        if let content = window?.contentView {
+            window?.makeFirstResponder(content)
+        }
         NSApp.activate(ignoringOtherApps: true)
         // Only a freshly built window takes the preference: an existing one
         // is already where the user put it, and toggling it mid-animation
@@ -457,7 +460,74 @@ final class ReceiverVideoView: NSView {
     required init?(coder: NSCoder) { fatalError("not used") }
 
     override func resetCursorRects() {
-        addCursorRect(bounds, cursor: blankCursor)
+        addCursorRect(bounds, cursor: .arrow)
+    }
+
+    override var acceptsFirstResponder: Bool { true }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    private var tracking: NSTrackingArea?
+    private var pressOrigin: CGPoint?
+    private var lastDrag: CGPoint?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let tracking { removeTrackingArea(tracking) }
+        let area = NSTrackingArea(rect: bounds,
+                                  options: [.mouseMoved, .activeInKeyWindow,
+                                            .inVisibleRect, .enabledDuringMouseDrag],
+                                  owner: self, userInfo: nil)
+        addTrackingArea(area)
+        tracking = area
+        window?.acceptsMouseMovedEvents = true
+    }
+
+    private func normalized(_ event: NSEvent) -> CGPoint? {
+        guard let rect = videoRect() else { return nil }
+        let p = convert(event.locationInWindow, from: nil)
+        guard rect.contains(p) else { return nil }
+        return CGPoint(x: (p.x - rect.minX) / rect.width,
+                       y: (rect.maxY - p.y) / rect.height)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        window?.makeFirstResponder(self)
+        guard let p = normalized(event) else { return }
+        pressOrigin = p
+        lastDrag = p
+        receiver?.sendTouch(phase: "began", x: p.x, y: p.y)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard pressOrigin != nil, let p = normalized(event) else { return }
+        lastDrag = p
+        receiver?.sendTouch(phase: "moved", x: p.x, y: p.y)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        guard pressOrigin != nil else { return }
+        let p = normalized(event) ?? lastDrag ?? pressOrigin!
+        receiver?.sendTouch(phase: "ended", x: p.x, y: p.y)
+        pressOrigin = nil
+        lastDrag = nil
+    }
+
+    override func keyDown(with event: NSEvent) {
+        if event.modifierFlags.intersection([.command, .control, .option]).isEmpty {
+            switch event.keyCode {
+            case 51, 117: receiver?.sendKey("backspace"); return
+            case 36, 76: receiver?.sendKey("enter"); return
+            case 48: receiver?.sendKey("tab"); return
+            case 53: receiver?.sendKey("escape"); return
+            case 123, 124, 125, 126: return
+            default: break
+            }
+            if let text = event.characters, !text.isEmpty {
+                receiver?.sendText(text)
+                return
+            }
+        }
+        super.keyDown(with: event)
     }
 
     override func layout() {

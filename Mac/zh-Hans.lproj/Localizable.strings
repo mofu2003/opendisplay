@@ -1,6 +1,10 @@
 "Your iPads, iPhones and Macs as extra displays" = "将平板、手机和 Mac 变成扩展屏";
 "Disconnect All" = "全部断开";
 "Devices" = "设备";
+"Receive a screen" = "接收屏幕";
+"Use this Mac as a display" = "允许其他设备投屏到此 Mac";
+"Connected — the video window opens automatically." = "已连接，画面窗口会自动打开。";
+"Waiting for a device to connect…" = "正在等待设备连接…";
 "No devices found — plug one in via USB, or open the OpenDisplay app on a device on this WiFi network." = "未发现设备。请通过 USB 连接设备，或在同一 WiFi 网络的设备上打开 OpenDisplay。";
 "Connect" = "连接";
 "Mode" = "模式";

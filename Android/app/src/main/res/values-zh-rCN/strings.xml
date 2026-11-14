@@ -48,4 +48,21 @@
     <string name="link_kofi">在 Ko-fi 上支持 OpenDisplay</string>
     <string name="device_phone">手机</string>
     <string name="device_tablet">平板</string>
+    <string name="sender_open">投屏到 Mac</string>
+    <string name="sender_title">投屏到 Mac</string>
+    <string name="sender_host">Mac 地址</string>
+    <string name="sender_port">端口</string>
+    <string name="sender_search">搜索 Mac</string>
+    <string name="sender_start">开始投屏</string>
+    <string name="sender_stop">停止投屏</string>
+    <string name="sender_accessibility">开启输入控制</string>
+    <string name="sender_hint">在 Mac 上打开 OpenDisplay 并启用“允许其他设备投屏到此 Mac”，两台设备需连接同一 WiFi。</string>
+    <string name="sender_searching">正在搜索 Mac…</string>
+    <string name="sender_not_found">未找到 Mac，请手动输入地址。</string>
+    <string name="sender_not_mac">该设备不是 Mac 接收端。</string>
+    <string name="sender_no_accessibility">未开启无障碍服务：画面可见，但无法点击或打字。</string>
+    <string name="sender_starting">正在启动…</string>
+    <string name="sender_active">正在投屏，请保持此应用打开。</string>
+    <string name="sender_stopped">已停止。</string>
+    <string name="sender_error">无法启动：%1$s</string>
 </resources>

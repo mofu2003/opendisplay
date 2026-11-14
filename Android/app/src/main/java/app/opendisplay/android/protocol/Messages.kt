@@ -5,8 +5,9 @@ import org.json.JSONObject
 
 /** PROTOCOL.md section 10 / Shared/Protocol.swift `WireProtocol`. */
 object WireProtocol {
-    const val VERSION = 3
+    const val VERSION = 4
     const val PENCIL_WIRE_VERSION = 3
+    const val TEXT_WIRE_VERSION = 4
     const val MIN_SUPPORTED_PEER = 1
     const val ASSUMED_WHEN_ABSENT = 1
     const val TCP_PORT = 9000

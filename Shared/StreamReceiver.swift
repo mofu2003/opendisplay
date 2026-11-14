@@ -1066,6 +1066,18 @@ final class StreamReceiver: ObservableObject {
         sendControl(["type": "scroll", "dx": dx, "dy": dy])
     }
 
+    /// Typed text for senders that can inject it (Android). Plain Unicode
+    /// text; the sender decides how to deliver it to the focused field.
+    func sendText(_ text: String) {
+        guard !text.isEmpty else { return }
+        sendControl(["type": "text", "text": text])
+    }
+
+    /// Named non-text keys: "backspace", "enter", "tab", "escape".
+    func sendKey(_ key: String) {
+        sendControl(["type": "key", "key": key])
+    }
+
     /// Apple Pencil stroke/hover. azimuth and altitude are radians.
     /// rotation is always 0 until Apple Pencil Pro barrel roll is wired up.
     func sendPencil(phase: String, x: Double, y: Double,
