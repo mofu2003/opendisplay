@@ -138,7 +138,11 @@ class UpdateManager(
     }
 
     private fun fetchRelease(): Release {
-        val connection = open(context.getString(R.string.update_manifest_url), "application/json")
+        // raw.githubusercontent.com sits behind a CDN that can keep serving the
+        // previous main-branch manifest for a few minutes. A changing query
+        // string makes the manifest check fetch the current object.
+        val url = context.getString(R.string.update_manifest_url) + "?t=" + System.currentTimeMillis()
+        val connection = open(url, "application/json")
         try {
             val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
             val obj = JSONObject(body)
@@ -225,9 +229,12 @@ class UpdateManager(
         repeat(6) {
             val connection = current.openConnection() as HttpURLConnection
             connection.instanceFollowRedirects = false
+            connection.useCaches = false
             connection.connectTimeout = 12_000
             connection.readTimeout = 20_000
             connection.setRequestProperty("Accept", accept)
+            connection.setRequestProperty("Cache-Control", "no-cache")
+            connection.setRequestProperty("Pragma", "no-cache")
             connection.setRequestProperty("User-Agent", "OpenDisplay-Android")
             val code = connection.responseCode
             if (code in 300..399) {
