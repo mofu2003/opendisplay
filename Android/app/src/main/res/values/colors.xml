@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fixed brand palette: the blue of the app logo, not the wallpaper. -->
+    <color name="od_accent">#0A6CFF</color>
+    <color name="od_accent_deep">#0047B3</color>
+    <color name="od_accent_text">#0A6CFF</color>
+    <color name="od_accent_soft">#E3EEFF</color>
+    <color name="od_hero_top">#EAF3FF</color>
+    <color name="od_success">#18A957</color>
+    <color name="od_warning">#F0A000</color>
+    <color name="od_surface">#F7FAFF</color>
+    <color name="od_on_surface">#0B1B2B</color>
+    <color name="od_surface_variant">#DCE6F3</color>
+    <color name="od_on_surface_variant">#43566E</color>
+    <color name="od_outline">#7C8DA5</color>
+    <color name="od_outline_variant">#C9D5E5</color>
+    <color name="od_container_lowest">#FFFFFF</color>
+    <color name="od_container_low">#F1F6FD</color>
+    <color name="od_container">#EAF1FB</color>
+    <color name="od_container_high">#E1EAF7</color>
+    <color name="od_container_highest">#D7E2F1</color>
+</resources>

@@ -35,8 +35,8 @@
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://opendisplay.app/appcast-receiver.xml</string>
+	<string>https://raw.githubusercontent.com/mofu2003/opendisplay/main/public/appcast-receiver.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>rYxlIePmwzi2bRo/qIsuY2TqTnQ34li2gQhJpGBiumw=</string>
+	<string>6UtPbiJyqWFo8rmlHV+D4giUbYtrfi0jjjMm9G4O/h0=</string>
 </dict>
 </plist>

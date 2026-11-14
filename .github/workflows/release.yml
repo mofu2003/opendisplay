@@ -197,10 +197,8 @@ jobs:
       # Builds appcast.xml (sender) and appcast-receiver.xml (receiver app)
       # from the just-released, notarized DMGs and commits them to public/ on
       # main. One feed per app: each bundle has its own SUFeedURL, and a mixed
-      # feed would offer the wrong app's update. The Pages workflow (pages.yml) triggers
-      # on public/** changes, copies public/ into docs/ via the Vite build, and
-      # deploys it — so https://opendisplay.app/appcast.xml (the SUFeedURL in
-      # project.yml) resolves.
+      # feed would offer the wrong app's update. The feeds are served straight
+      # from raw.githubusercontent.com, so this works in a fork without Pages.
       #
       # No-ops gracefully until the maintainer adds the SPARKLE_PRIVATE_KEY
       # secret (the EdDSA private key from Sparkle's `generate_keys`), so this

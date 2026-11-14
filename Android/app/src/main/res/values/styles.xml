@@ -1,7 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material 3, light/dark following the system; dynamic color on 12+. -->
-    <style name="Theme.OpenDisplay" parent="Theme.Material3.DayNight.NoActionBar">
+    <!-- Fixed brand palette: one blue identity on every wallpaper. -->
+    <style name="Theme.OpenDisplay.Base" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/od_accent</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">@color/od_accent_soft</item>
+        <item name="colorOnPrimaryContainer">@color/od_accent_deep</item>
+        <item name="colorSecondary">@color/od_accent</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorSecondaryContainer">@color/od_accent_soft</item>
+        <item name="colorOnSecondaryContainer">@color/od_accent_deep</item>
+        <item name="colorSurface">@color/od_surface</item>
+        <item name="colorOnSurface">@color/od_on_surface</item>
+        <item name="colorSurfaceVariant">@color/od_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/od_on_surface_variant</item>
+        <item name="colorOutline">@color/od_outline</item>
+        <item name="colorOutlineVariant">@color/od_outline_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/od_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/od_container_low</item>
+        <item name="colorSurfaceContainer">@color/od_container</item>
+        <item name="colorSurfaceContainerHigh">@color/od_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/od_container_highest</item>
+    </style>
+
+    <style name="Theme.OpenDisplay" parent="Theme.OpenDisplay.Base">
         <item name="android:windowBackground">@android:color/black</item>
         <!-- Preference dialogs (the name editor) take the activity theme: Material 3. -->
         <item name="alertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>
@@ -10,7 +32,7 @@
     </style>
 
     <!-- Full-screen sheets (settings, log): not floating, on the surface color. -->
-    <style name="Theme.OpenDisplay.Sheet" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.OpenDisplay.Sheet" parent="Theme.OpenDisplay.Base">
         <item name="android:windowIsFloating">false</item>
         <!-- Preference dialogs (the name editor) in Material 3, not AppCompat grey. -->
         <item name="alertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>

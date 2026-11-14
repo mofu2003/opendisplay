@@ -31,10 +31,14 @@ class SenderService : Service() {
 
         @Volatile
         var status = ""
+
+        @Volatile
+        var casting = false
     }
 
     private var session: SenderSession? = null
     private var projection: MediaProjection? = null
+    private val main = Handler(Looper.getMainLooper())
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -71,7 +75,18 @@ class SenderService : Service() {
         val port = intent.getIntExtra(EXTRA_PORT, 9000)
         status = getString(R.string.sender_starting)
         session?.stop()
-        session = SenderSession(this, projection, host, port).also { it.start() }
+        lateinit var created: SenderSession
+        created = SenderSession(this, projection, host, port) {
+            main.post {
+                if (session === created) {
+                    session = null
+                    stopCasting(keepStatus = true)
+                }
+            }
+        }
+        session = created
+        casting = true
+        created.start()
         Log.i("od-sender", "cast started to $host:$port")
         return START_NOT_STICKY
     }
@@ -80,14 +95,17 @@ class SenderService : Service() {
         session?.stop()
         session = null
         projection = null
+        casting = false
         super.onDestroy()
     }
 
-    private fun stopCasting() {
-        session?.stop()
+    private fun stopCasting(keepStatus: Boolean = false) {
+        val s = session
         session = null
+        s?.stop()
         projection = null
-        status = getString(R.string.sender_stopped)
+        casting = false
+        if (!keepStatus) status = getString(R.string.sender_stopped)
         if (Build.VERSION.SDK_INT >= 24) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {

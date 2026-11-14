@@ -25,9 +25,11 @@ class SenderSession(
     private val projection: MediaProjection,
     private val host: String,
     private val port: Int,
+    private val onFinished: () -> Unit = {},
 ) {
     @Volatile private var running = true
     @Volatile private var stopped = false
+    @Volatile private var finished = false
     private var socket: Socket? = null
     private var encoder: ScreenEncoder? = null
 
@@ -101,8 +103,16 @@ class SenderSession(
                     R.string.sender_error, e.message ?: e.javaClass.simpleName)
             }
         } finally {
-            stop()
+            finish()
         }
+    }
+
+    /** The session ended on its own (Mac closed, network error): tell the service. */
+    private fun finish() {
+        if (finished) return
+        finished = true
+        stop()
+        onFinished()
     }
 
     private fun handle(message: JSONObject, sink: SenderSink) {
@@ -117,7 +127,10 @@ class SenderSession(
                 message.optDouble("x"), message.optDouble("y"))
             "text" -> input?.typeText(message.optString("text"))
             "key" -> input?.pressKey(message.optString("key"))
-            "closing", "sleeping" -> running = false
+            "closing", "sleeping" -> {
+                SenderService.status = context.getString(R.string.sender_stopped)
+                running = false
+            }
         }
     }
 }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="od_accent">#2F86FF</color>
+    <color name="od_accent_deep">#6FB2FF</color>
+    <color name="od_accent_text">#8FC2FF</color>
+    <color name="od_accent_soft">#12263D</color>
+    <color name="od_hero_top">#0D1727</color>
+    <color name="od_success">#34D399</color>
+    <color name="od_warning">#FBBF24</color>
+    <color name="od_surface">#0B1220</color>
+    <color name="od_on_surface">#E3EBF7</color>
+    <color name="od_surface_variant">#253346</color>
+    <color name="od_on_surface_variant">#B8C7DA</color>
+    <color name="od_outline">#8A9BB0</color>
+    <color name="od_outline_variant">#33455C</color>
+    <color name="od_container_lowest">#070D17</color>
+    <color name="od_container_low">#101A2A</color>
+    <color name="od_container">#142135</color>
+    <color name="od_container_high">#1A2A40</color>
+    <color name="od_container_highest">#22344D</color>
+</resources>

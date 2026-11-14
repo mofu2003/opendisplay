@@ -163,7 +163,7 @@ class SettingsDialog : DialogFragment() {
             screen.category(R.string.section_about) {
                 addPreference(info(R.string.row_version, versionName()))
                 addPreference(link(R.string.link_website, "https://opendisplay.app", null))
-                addPreference(link(R.string.link_github, "https://github.com/peetzweg/opendisplay", null))
+                addPreference(link(R.string.link_github, "https://github.com/mofu2003/opendisplay", null))
                 addPreference(link(R.string.link_kofi, "https://ko-fi.com/peetzweg", null))
             }
         }
@@ -221,6 +221,6 @@ class SettingsDialog : DialogFragment() {
     }
 
     companion object {
-        const val MAC_APP_URL = "https://opendisplay.app/"
+        const val MAC_APP_URL = "https://github.com/mofu2003/opendisplay/releases/latest"
     }
 }

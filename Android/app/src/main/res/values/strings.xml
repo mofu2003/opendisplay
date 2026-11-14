@@ -19,6 +19,16 @@
     <string name="sender_active">Casting. Keep this app open.</string>
     <string name="sender_stopped">Stopped.</string>
     <string name="sender_error">Could not start: %1$s</string>
+    <string name="ui_tagline">Your tablet as a wireless Mac display</string>
+    <string name="ui_get_started">Get started</string>
+    <string name="ui_steps_title">How it works</string>
+    <string name="ui_steps_subtitle">Usually under 10 seconds</string>
+    <string name="ui_sender_note">Share this tablet\'s screen to a Mac window</string>
+    <string name="sender_subtitle">Share this screen to your Mac</string>
+    <string name="sender_connect_title">Connect to a Mac</string>
+    <string name="sender_input_title">Keyboard &amp; mouse</string>
+    <string name="sender_input_enabled">On — click and type from the Mac.</string>
+    <string name="sender_scan_hint">Search finds a Mac that has receiver mode turned on.</string>
     <!-- Mirrors the iOS receiver's copy (iOS/OpenSidecarPhoneApp.swift). -->
     <string name="title">OpenDisplay</string>
     <string name="status_ready">Ready to connect</string>
@@ -67,6 +77,6 @@
     <string name="section_about">About</string>
     <string name="row_version">Version</string>
     <string name="link_website">OpenDisplay.app</string>
-    <string name="link_github">GitHub: peetzweg/opendisplay</string>
+    <string name="link_github">GitHub: mofu2003/opendisplay</string>
     <string name="link_kofi">Support OpenDisplay on Ko-fi</string>
 </resources>

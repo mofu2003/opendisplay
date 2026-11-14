@@ -2,7 +2,6 @@ package app.opendisplay.android.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.google.android.material.color.DynamicColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -114,7 +113,6 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     @Volatile private var blockingMessage: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        DynamicColors.applyToActivityIfAvailable(this)
         super.onCreate(savedInstanceState)
         nightMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
         Log.init(this)
@@ -177,7 +175,6 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         if (night != nightMode) {
             nightMode = night
             theme.setTo(resources.newTheme().apply { applyStyle(R.style.Theme_OpenDisplay, true) })
-            DynamicColors.applyToActivityIfAvailable(this)
             onboarding?.takeIf { it.isShowing }?.let { it.setOnDismissListener(null); it.dismiss(); showOnboarding() }
             (supportFragmentManager.findFragmentByTag(SETTINGS) as? SettingsDialog)?.let {
                 it.dismissAllowingStateLoss()

@@ -44,7 +44,7 @@
     <string name="section_about">关于</string>
     <string name="row_version">版本</string>
     <string name="link_website">OpenDisplay.app</string>
-    <string name="link_github">GitHub：peetzweg/opendisplay</string>
+    <string name="link_github">GitHub：mofu2003/opendisplay</string>
     <string name="link_kofi">在 Ko-fi 上支持 OpenDisplay</string>
     <string name="device_phone">手机</string>
     <string name="device_tablet">平板</string>
@@ -65,4 +65,14 @@
     <string name="sender_active">正在投屏，请保持此应用打开。</string>
     <string name="sender_stopped">已停止。</string>
     <string name="sender_error">无法启动：%1$s</string>
+    <string name="ui_tagline">把这块平板变成 Mac 的无线副屏</string>
+    <string name="ui_get_started">开始使用</string>
+    <string name="ui_steps_title">连接步骤</string>
+    <string name="ui_steps_subtitle">首次连接通常不到 10 秒</string>
+    <string name="ui_sender_note">把这块平板的画面共享到 Mac 窗口</string>
+    <string name="sender_subtitle">把这块屏幕共享到 Mac</string>
+    <string name="sender_connect_title">连接 Mac</string>
+    <string name="sender_input_title">键鼠控制</string>
+    <string name="sender_input_enabled">已开启，可在 Mac 上点击和打字。</string>
+    <string name="sender_scan_hint">搜索会找到已开启接收模式的 Mac。</string>
 </resources>

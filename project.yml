@@ -64,20 +64,18 @@ targets:
         NSBonjourServices: ["_opensidecar._tcp"]
         LSApplicationCategoryType: public.app-category.utilities
         # --- Sparkle auto-update (issue #52) ---
-        # The appcast feed is hosted on the landing-page site at the custom
-        # domain. The release workflow publishes appcast.xml so this URL
-        # resolves — see .github/workflows/release.yml.
-        SUFeedURL: https://opendisplay.app/appcast.xml
+        # Fork feed: this repository's release workflow commits the signed
+        # appcast to public/ on main, so the raw URL always serves our own
+        # updates instead of the upstream OpenDisplay feed.
+        SUFeedURL: https://raw.githubusercontent.com/mofu2003/opendisplay/main/public/appcast.xml
         # Public EdDSA key from Sparkle's `generate_keys`. The matching private
         # key lives only as the `SPARKLE_PRIVATE_KEY` GitHub Actions secret
         # (used to sign the appcast in CI) and is never committed. Sparkle
         # verifies update signatures against this public key before installing.
-        SUPublicEDKey: rYxlIePmwzi2bRo/qIsuY2TqTnQ34li2gQhJpGBiumw=
-        # Check for updates automatically in the background on a schedule.
-        # Fork builds must not auto-update to the upstream appcast: that
-        # would replace this build with the official sender and drop the
-        # merged receiver mode.
-        SUEnableAutomaticChecks: false
+        SUPublicEDKey: 6UtPbiJyqWFo8rmlHV+D4giUbYtrfi0jjjMm9G4O/h0=
+        # Background checks read the fork feed above and verify it with the
+        # fork key, so an upstream release can never replace this build.
+        SUEnableAutomaticChecks: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.peetzweg.opensidecar.mac
@@ -132,8 +130,8 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         # Own Sparkle feed (separate DMG, same signing key); published by
         # release.yml next to the sender's appcast.
-        SUFeedURL: https://opendisplay.app/appcast-receiver.xml
-        SUPublicEDKey: rYxlIePmwzi2bRo/qIsuY2TqTnQ34li2gQhJpGBiumw=
+        SUFeedURL: https://raw.githubusercontent.com/mofu2003/opendisplay/main/public/appcast-receiver.xml
+        SUPublicEDKey: 6UtPbiJyqWFo8rmlHV+D4giUbYtrfi0jjjMm9G4O/h0=
         SUEnableAutomaticChecks: true
     settings:
       base:
