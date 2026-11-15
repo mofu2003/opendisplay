@@ -427,12 +427,14 @@ receiver's clock. The sender MUST reply with `pong` echoing `t` (section
 cadence is load-bearing.
 
 **`touch`** carries `phase` (string): one of `"began"`, `"moved"`,
-`"ended"`, `"cancelled"`; `x`, `y` (numbers): normalized position (section
-7); `t` (number, optional): the event timestamp expressed **in the
-sender's clock** (the receiver adds its measured clock offset before
-stamping, so the sender can compute input latency without its own sync).
-Senders MUST tolerate an absent `t` (it is omitted until the offset is
-known).
+`"ended"`, `"cancelled"`, or the one-shot `"secondary"`; `x`, `y`
+(numbers): normalized position (section 7); `t` (number, optional): the
+event timestamp expressed **in the sender's clock** (the receiver adds its
+measured clock offset before stamping, so the sender can compute input
+latency without its own sync). Senders MUST tolerate an absent `t` (it is
+omitted until the offset is known). `"secondary"` is a complete
+right-click at `x`, `y`: it has no matching down/up phases and an older
+sender that does not know it ignores it.
 
 **`scroll`** carries `dx`, `dy` (numbers): scroll deltas in **video
 pixels** (section 7) with **natural-scrolling sign** (content follows the
@@ -449,11 +451,12 @@ is up is a hover move.
 **`proximity`** (pv 3) carries `entering` (bool) and the normalized `x`,
 `y` where the stylus entered or left hover range.
 
-**`text` and `key`** (pv 4) let a receiving Mac drive an Android sender's
-focused field. `text` carries a string to append to the focused editable
-field (or paste when no editable node is focused). `key` carries one of
-`backspace`, `enter`, `tab`, or `escape`. Senders that predate pv 4 ignore
-both types, so the receiver keeps working as a display.
+**`text` and `key`** (pv 4) let a receiver drive the sender's focused field
+(a Mac receiver typing into an Android sender, or an Android receiver's
+floating keyboard typing into a Mac sender). `text` carries a string to
+append to the focused field. `key` carries one of `backspace`, `enter`,
+`tab`, or `escape`. Senders that predate pv 4 ignore both types, so the
+receiver keeps working as a display.
 
 **Pencil fallback (normative):** a receiver MUST NOT send `pencil` or
 `proximity` to a sender whose `pv` is below 3; it MUST degrade the stylus

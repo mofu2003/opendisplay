@@ -253,6 +253,12 @@ class ReceiverServer(
 
     fun sendScroll(dx: Double, dy: Double) = send(Messages.scroll(dx, dy))
 
+    fun sendText(text: String) {
+        if (text.isNotEmpty()) send(Messages.text(text))
+    }
+
+    fun sendKey(key: String) = send(Messages.key(key))
+
     fun sendPencil(phase: String, s: PenInput.Sample) = send(Messages.pencil(phase,
         s.copy(x = s.x.coerceIn(0.0, 1.0), y = s.y.coerceIn(0.0, 1.0)), senderNow()))
 

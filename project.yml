@@ -168,6 +168,7 @@ targets:
       - Mac/VirtualCanvasSizing.swift
       - Mac/PhoneInfo.swift
       - Mac/DesktopPolicy.swift
+      - Mac/ClickTracker.swift
       - Mac/ReverseConnectionRequest.swift
       - Mac/CaptureSourceCheck.swift
       - Mac/AndroidUSBFunction.swift

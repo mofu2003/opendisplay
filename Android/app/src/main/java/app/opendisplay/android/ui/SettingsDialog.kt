@@ -152,7 +152,7 @@ class SettingsDialog : DialogFragment() {
                 listOf(
                     getString(R.string.how_wifi, kind),
                     getString(R.string.how_rotate, kind),
-                    getString(R.string.how_touch),
+                    getString(R.string.how_touch, kind),
                     getString(R.string.how_pen),
                 ).forEach { addPreference(footer(it)) }
             }

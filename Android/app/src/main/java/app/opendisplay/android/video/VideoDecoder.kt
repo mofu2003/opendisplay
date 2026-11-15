@@ -36,7 +36,7 @@ class VideoDecoder(private val callbacks: Callbacks) {
     private sealed class Work {
         class Frame(val unit: AccessUnit, val receivedNanos: Long) : Work()
         class SetSurface(val surface: Surface?, val done: CountDownLatch?) : Work()
-        class SetStream(val codec: Codec, val width: Int, val height: Int) : Work()
+        class SetStream(val codec: Codec, val width: Int, val height: Int, val fps: Int) : Work()
         object Reset : Work()
         class Fail(val failed: MediaCodec) : Work()
         object Quit : Work()
@@ -50,6 +50,7 @@ class VideoDecoder(private val callbacks: Callbacks) {
     private var codec = Codec.H264
     private var announcedWidth = 0
     private var announcedHeight = 0
+    private var streamFramesPerSecond = 60
     private var decoder: MediaCodec? = null
     private var output: OutputDrain? = null
     private var parameterSets: List<ByteArray> = emptyList()
@@ -95,7 +96,8 @@ class VideoDecoder(private val callbacks: Callbacks) {
     }
 
     /** From `streamConfig`: the codec to expect and the announced raster. */
-    fun setStream(codec: Codec, width: Int, height: Int) = queue.put(Work.SetStream(codec, width, height))
+    fun setStream(codec: Codec, width: Int, height: Int, fps: Int) =
+        queue.put(Work.SetStream(codec, width, height, fps))
 
     /** New session: forget the old stream entirely (pending commands stay). */
     fun reset() {
@@ -119,6 +121,7 @@ class VideoDecoder(private val callbacks: Callbacks) {
                 is Work.SetSurface -> {
                     teardown()
                     surface = work.surface
+                    applySurfaceFrameRate(work.surface)
                     awaitingKeyframe = true
                     if (surface != null) {
                         prewarm()
@@ -135,6 +138,8 @@ class VideoDecoder(private val callbacks: Callbacks) {
                     codec = work.codec
                     announcedWidth = work.width
                     announcedHeight = work.height
+                    streamFramesPerSecond = work.fps.coerceAtLeast(1)
+                    applySurfaceFrameRate(surface)
                     prewarm()
                 }
                 Work.Reset -> {
@@ -285,6 +290,7 @@ class VideoDecoder(private val callbacks: Callbacks) {
         format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, maxOf(width * height, minInputSize))
         if (Build.VERSION.SDK_INT >= 23) {
             format.setInteger(MediaFormat.KEY_PRIORITY, 0) // realtime
+            format.setInteger(MediaFormat.KEY_OPERATING_RATE, streamFramesPerSecond)
         }
         // Vendor low-latency switches; unknown keys are ignored by the codec.
         format.setInteger("vendor.qti-ext-dec-low-latency.enable", 1)
@@ -342,6 +348,23 @@ class VideoDecoder(private val callbacks: Callbacks) {
             MediaCodec.createDecoderByType(codec.mime)
         } catch (e: Exception) {
             null
+        }
+    }
+
+    /**
+     * SurfaceFlinger otherwise treats a SurfaceView as adaptive content and
+     * may keep it on a lower refresh rate. Tell it the stream is a fixed-rate
+     * source so a 60 fps session can actually be presented at 60 Hz.
+     */
+    private fun applySurfaceFrameRate(surface: Surface?) {
+        if (surface == null || Build.VERSION.SDK_INT < 30) return
+        try {
+            surface.setFrameRate(
+                streamFramesPerSecond.toFloat(),
+                Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
+            )
+        } catch (_: IllegalArgumentException) {
+            // The panel may not expose this exact rate; system choice is fine.
         }
     }
 

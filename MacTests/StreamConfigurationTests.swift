@@ -150,6 +150,22 @@ final class StreamConfigurationTests: XCTestCase {
         XCTAssertEqual(decoderLimited.framesPerSecond, 90)
     }
 
+    func testConcurrentEncodeLimitBuysSixtyFPSBelowFiveK() {
+        func slots(_ width: Int, _ height: Int, _ fps: Int) -> Int {
+            VideoStreamConfiguration(
+                codec: "hevc",
+                encodedSize: PixelSize(width: width, height: height),
+                bitrate: 18_000_000,
+                framesPerSecond: fps
+            ).concurrentEncodeLimit
+        }
+
+        XCTAssertEqual(slots(3200, 2080, 60), 2)
+        XCTAssertEqual(slots(3840, 2160, 60), 2)
+        XCTAssertEqual(slots(3200, 2080, 30), 1)
+        XCTAssertEqual(slots(5120, 2880, 60), 1)
+    }
+
     func testMultipleCapabilityEntriesAreAlternatives() throws {
         let caps = [
             VideoCapability(codec: "future", maxWidth: 8000, maxHeight: 8000),

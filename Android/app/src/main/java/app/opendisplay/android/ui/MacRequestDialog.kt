@@ -124,10 +124,13 @@ class MacRequestDialog(
                 text = "${target.name}\n${target.host}:${target.port}"
                 isAllCaps = false
                 gravity = Gravity.START or Gravity.CENTER_VERTICAL
-                setTextColor(color(R.color.od_accent_text))
+                setTextColor(color(R.color.od_on_surface))
+                backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
                 strokeColor = ColorStateList.valueOf(color(R.color.od_outline_variant))
                 strokeWidth = dp(1)
                 cornerRadius = dp(16)
+                insetTop = 0
+                insetBottom = 0
                 setPadding(dp(16), dp(8), dp(16), dp(8))
                 isEnabled = !busy
                 setOnClickListener { request(target) }

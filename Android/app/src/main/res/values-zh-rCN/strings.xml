@@ -40,8 +40,9 @@
     <string name="section_how">连接方法</string>
     <string name="how_wifi">WiFi：将两台设备连接到同一网络，然后在电脑端 OpenDisplay 中选择这台%1$s。</string>
     <string name="how_rotate">旋转%1$s即可使用竖向扩展屏。</string>
-    <string name="how_touch">触控：轻点以点击，拖动以移动，双指滑动以滚动。</string>
+    <string name="how_touch">触控：轻点左键，双指轻点右键，拖动移动，双指滑动滚动。点击悬浮键盘按钮即可用这台%1$s打字。</string>
     <string name="how_pen">触控笔：支持压感和倾斜绘制。笔接触屏幕时会忽略手指触碰。</string>
+    <string name="remote_keyboard">输入到 Mac</string>
     <string name="mac_app_footer">请在同一 WiFi 网络的 Mac 上运行 OpenDisplay。尚未安装的话，可通过此链接下载。</string>
     <string name="section_about">关于</string>
     <string name="row_version">版本</string>

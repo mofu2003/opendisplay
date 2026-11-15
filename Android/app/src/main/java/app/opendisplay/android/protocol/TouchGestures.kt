@@ -21,6 +21,8 @@ class TouchGestures(
     private val scheduler: Scheduler,
     private val dragSlopPx: Float,
     private val holdDelayMs: Long = 120,
+    private val twoFingerTapMaxMs: Long = 300,
+    private val nowMs: () -> Long = { System.nanoTime() / 1_000_000 },
 ) {
     interface Output {
         fun touch(phase: String, x: Double, y: Double)
@@ -40,15 +42,24 @@ class TouchGestures(
 
     private var pendingDown: Point? = null
     private var downSent = false
+    private var singleFingerMoved = false
     private var holdTimer: Cancellable? = null
     private var lastNorm: Point? = null
 
     private var twoFinger = false
     private var lastCentroid: Point? = null
+    private var twoFingerStartedMs = 0L
+    private var twoFingerTravelPx = 0f
+    private var twoFingerTapPoint: Point? = null
+    private var twoFingerTapCandidate = false
 
     fun down(p: Point) {
         twoFinger = false
         lastCentroid = null
+        twoFingerTapCandidate = false
+        twoFingerTapPoint = null
+        twoFingerTravelPx = 0f
+        singleFingerMoved = false
         discardPendingDown()
         pendingDown = p
         lastNorm = p
@@ -57,13 +68,20 @@ class TouchGestures(
 
     /** A further finger landed; [centroid] of all fingers down now. */
     fun pointerDown(pointerCount: Int, centroid: Point) {
-        if (downSent) lastNorm?.let { output.touch("cancelled", it.nx, it.ny) }
+        val committedPress = downSent
+        if (committedPress) lastNorm?.let { output.touch("cancelled", it.nx, it.ny) }
         discardPendingDown()
         if (pointerCount == 2 && !twoFinger) {
             twoFinger = true
+            twoFingerTapCandidate = !singleFingerMoved
+            twoFingerStartedMs = nowMs()
+            twoFingerTravelPx = 0f
+            twoFingerTapPoint = centroid
             // macOS scrolls whatever sits under the cursor; put it on the
             // gesture once so the scroll lands on the window being touched.
             output.touch("moved", centroid.nx, centroid.ny)
+        } else if (pointerCount > 2) {
+            twoFingerTapCandidate = false
         }
         lastCentroid = centroid
     }
@@ -83,11 +101,15 @@ class TouchGestures(
             val last = lastCentroid
             lastCentroid = centroid
             if (last == null || videoScale <= 0f) return
+            twoFingerTravelPx += hypot(centroid.px - last.px, centroid.py - last.py)
+            twoFingerTapPoint = centroid
+            if (twoFingerTravelPx > dragSlopPx) twoFingerTapCandidate = false
             val dx = (centroid.px - last.px) / videoScale
             val dy = (centroid.py - last.py) / videoScale
             if (dx != 0f || dy != 0f) output.scroll(dx.toDouble(), dy.toDouble())
             return
         }
+        val previous = lastNorm
         lastNorm = primary
         val pending = pendingDown
         if (pending != null && !downSent) {
@@ -98,15 +120,31 @@ class TouchGestures(
                 output.touch("moved", primary.nx, primary.ny)
                 return
             }
+            singleFingerMoved = true
             commitPendingDown()
         }
-        if (downSent) output.touch("moved", primary.nx, primary.ny)
+        if (downSent) {
+            if (previous != null &&
+                hypot(primary.px - previous.px, primary.py - previous.py) > 1f) {
+                singleFingerMoved = true
+            }
+            output.touch("moved", primary.nx, primary.ny)
+        }
     }
 
     fun up(p: Point) {
         if (twoFinger) {
+            val tapPoint = twoFingerTapPoint ?: p
+            if (twoFingerTapCandidate &&
+                nowMs() - twoFingerStartedMs <= twoFingerTapMaxMs &&
+                twoFingerTravelPx <= dragSlopPx) {
+                output.touch("secondary", tapPoint.nx, tapPoint.ny)
+            }
             twoFinger = false
             lastCentroid = null
+            twoFingerTapCandidate = false
+            twoFingerTapPoint = null
+            twoFingerTravelPx = 0f
             discardPendingDown()
             return
         }
@@ -121,6 +159,10 @@ class TouchGestures(
         discardPendingDown()
         twoFinger = false
         lastCentroid = null
+        twoFingerTapCandidate = false
+        twoFingerTapPoint = null
+        twoFingerTravelPx = 0f
+        singleFingerMoved = false
     }
 
     /** Emit the withheld `began` where the finger first landed. */

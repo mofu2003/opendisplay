@@ -7,6 +7,7 @@ import org.junit.Test
 class TouchGesturesTest {
     private val events = mutableListOf<String>()
     private var pending: (() -> Unit)? = null
+    private var now = 1_000L
     private lateinit var g: TouchGestures
 
     @Before
@@ -25,6 +26,7 @@ class TouchGesturesTest {
                 TouchGestures.Cancellable { pending = null }
             },
             dragSlopPx = 10f,
+            nowMs = { now },
         )
     }
 
@@ -75,5 +77,45 @@ class TouchGesturesTest {
         pending!!.invoke()
         g.pointerDown(2, p(150f, 100f))
         assertEquals(listOf("began 0.10,0.10", "cancelled 0.10,0.10", "moved 0.15,0.10"), events)
+    }
+
+    @Test
+    fun twoFingerTapIsASecondaryClick() {
+        g.down(p(100f, 100f))
+        now = 1_040
+        g.pointerDown(2, p(150f, 100f))
+        now = 1_120
+        g.pointerUp()
+        g.up(p(150f, 100f))
+        assertEquals(listOf("moved 0.15,0.10", "secondary 0.15,0.10"), events)
+    }
+
+    @Test
+    fun slowTwoFingerHoldIsNotASecondaryClick() {
+        g.down(p(100f, 100f))
+        g.pointerDown(2, p(150f, 100f))
+        now += 500
+        g.pointerUp()
+        g.up(p(150f, 100f))
+        assertEquals(listOf("moved 0.15,0.10"), events)
+    }
+
+    @Test
+    fun secondFingerAfterTheHoldStillRightClicksWithoutMoving() {
+        g.down(p(100f, 100f))
+        pending!!.invoke()
+        g.pointerDown(2, p(150f, 100f))
+        now += 80
+        g.pointerUp()
+        g.up(p(150f, 100f))
+        assertEquals(
+            listOf(
+                "began 0.10,0.10",
+                "cancelled 0.10,0.10",
+                "moved 0.15,0.10",
+                "secondary 0.15,0.10",
+            ),
+            events,
+        )
     }
 }

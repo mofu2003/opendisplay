@@ -109,12 +109,13 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
     // buys frames only below 5K and roughly doubles p95 latency, at 5K it buys
     // none (research/hevc-m5-2026-09-29).
     private var pendingEncodes = 0
+    private var pendingEncodeLimit = 1
     private var maxPendingEncodes: Int {
         #if DEBUG
         let override = UserDefaults.standard.integer(forKey: "maxPendingEncodes")
         if override > 0 { return override }   // A/B knob: -maxPendingEncodes N
         #endif
-        return 1
+        return pendingEncodeLimit
     }
 
     // ── Outstanding send backpressure (maxPendingSends = 3) ──────────────────
@@ -2605,7 +2606,7 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
             // so one file holds both ends of the story.
             if let json = try? JSONSerialization.data(withJSONObject: obj),
                let line = String(data: json, encoding: .utf8) {
-                Log.info("PHONE-STATS \(line) | mac enc↓=\(dropsEncThisWindow) net↓=\(dropsNetThisWindow) pending=\(pendingSends)")
+                Log.info("PHONE-STATS \(line) | mac enc↓=\(dropsEncThisWindow) net↓=\(dropsNetThisWindow) pending=\(pendingSends) encSlots=\(pendingEncodeLimit)")
                 dropsEncThisWindow = 0
                 dropsNetThisWindow = 0
             }
@@ -2681,6 +2682,14 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
         case "scroll":
             if let dx = obj["dx"] as? Double, let dy = obj["dy"] as? Double {
                 inputInjector?.handleScroll(dx: dx, dy: dy)
+            }
+        case "text":
+            if let text = obj["text"] as? String {
+                inputInjector?.handleText(text)
+            }
+        case "key":
+            if let key = obj["key"] as? String {
+                inputInjector?.handleKey(key)
             }
         case "pencil":
             if let phase = obj["phase"] as? String,
@@ -2857,7 +2866,7 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
         pipelineLock.lock()
         consecutiveEncodeFailures = 0
         pipelineLock.unlock()
-        Log.info("encoder ready: \(width)x\(height) \(configuration.codec.uppercased()) \(baseBitrate / 1_000_000)Mbps @\(configuration.framesPerSecond)fps quality=\(quality.rawValue) lowLatencyRC=\(lowLatency && !usedFallback)\(usedFallback ? " (fallback)" : "")")
+        Log.info("encoder ready: \(width)x\(height) \(configuration.codec.uppercased()) \(baseBitrate / 1_000_000)Mbps @\(configuration.framesPerSecond)fps slots=\(configuration.concurrentEncodeLimit) quality=\(quality.rawValue) lowLatencyRC=\(lowLatency && !usedFallback)\(usedFallback ? " (fallback)" : "")")
     }
 
     // MARK: - Capture callback
@@ -3422,6 +3431,7 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
     private func setActiveStreamConfiguration(_ configuration: VideoStreamConfiguration) {
         pipelineLock.lock()
         activeStreamConfiguration = configuration
+        pendingEncodeLimit = configuration.concurrentEncodeLimit
         frameRateLimiter = FrameRateLimiter(framesPerSecond: configuration.framesPerSecond)
         pipelineLock.unlock()
     }
@@ -3447,6 +3457,7 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
         pipelineLock.lock()
         captureGeneration &+= 1
         activeStreamConfiguration = nil
+        pendingEncodeLimit = 1
         frameRateLimiter = FrameRateLimiter(framesPerSecond: 60)
         pipelineLock.unlock()
         captureDisplayID = 0

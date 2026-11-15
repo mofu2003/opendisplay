@@ -82,6 +82,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     private lateinit var decoder: VideoDecoder
     private lateinit var gestures: TouchGestures
     private lateinit var pen: PenInput
+    private lateinit var keyboard: RemoteKeyboard
     private val stats = StreamStats()
 
     private lateinit var installId: String
@@ -136,10 +137,16 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         buildViews()
         setContentView(root)
         enterImmersive()
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING or
+            WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED)
 
         decoder = VideoDecoder(this).also { it.start() }
         server = ReceiverServer(this, ::buildHello)
         advertiser = Advertiser(this)
+        keyboard = RemoteKeyboard(this, root, object : RemoteKeyboard.Output {
+            override fun text(text: String) = server.sendText(text)
+            override fun key(key: String) = server.sendKey(key)
+        })
         val slop = 10 * resources.displayMetrics.density
         gestures = TouchGestures(
             output = object : TouchGestures.Output {
@@ -588,6 +595,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         statsText.visibility = if (streaming && prefs.showAnalytics) View.VISIBLE else View.GONE
         blank.visibility = if (connected && senderAsleep) View.VISIBLE else View.GONE
         cursorView.visibility = if (streaming) View.VISIBLE else View.INVISIBLE
+        keyboard.refresh(streaming, macInputAvailable != false)
         // Input is gated on streaming: a gesture cut off here must still
         // release the button (and drop a pending hold) on the sender.
         if (!streaming) gestures.cancel()
@@ -661,6 +669,23 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
             display.supportedRefreshRates.maxOrNull() ?: display.refreshRate
         }
         return rate.roundToInt().coerceAtLeast(30)
+    }
+
+    private fun applyDisplayFrameRate(fps: Int) {
+        if (Build.VERSION.SDK_INT < 23) return
+        main.post {
+            val attributes = window.attributes
+            val requested = fps.toFloat()
+            if (attributes.preferredRefreshRate == requested) return@post
+            attributes.preferredRefreshRate = requested
+            window.attributes = attributes
+            val message = if (fps > 0) {
+                "requested $fps Hz presentation"
+            } else {
+                "released display frame rate"
+            }
+            Log.i(TAG, message)
+        }
     }
 
     private fun buildHello(cursorPort: Int?): JSONObject =
@@ -799,6 +824,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         hasPictureFlag = false
         decoder.reset()
         main.post {
+            applyDisplayFrameRate(0)
             connected = false
             hasPicture = false
             macInputAvailable = null
@@ -830,7 +856,8 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
             return
         }
         streamInfo = "${codec.wire.uppercase()} ${width}x$height @$fps"
-        decoder.setStream(codec, width, height)
+        applyDisplayFrameRate(fps)
+        decoder.setStream(codec, width, height, fps)
     }
 
     override fun onCursor(x: Double, y: Double, visible: Boolean) {

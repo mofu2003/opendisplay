@@ -101,6 +101,12 @@ object Messages {
     fun scroll(dx: Double, dy: Double): JSONObject =
         JSONObject().put("type", "scroll").put("dx", dx).put("dy", dy)
 
+    fun text(text: String): JSONObject =
+        JSONObject().put("type", "text").put("text", text)
+
+    fun key(key: String): JSONObject =
+        JSONObject().put("type", "key").put("key", key)
+
     fun simple(type: String): JSONObject = JSONObject().put("type", type)
 
     fun bytes(obj: JSONObject): ByteArray = obj.toString().toByteArray(Charsets.UTF_8)

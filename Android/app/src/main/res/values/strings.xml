@@ -94,8 +94,9 @@
     <string name="section_how">How to connect</string>
     <string name="how_wifi">WiFi: both devices on the same network, then pick this %1$s in OpenDisplay on your computer.</string>
     <string name="how_rotate">Rotate the %1$s for a vertical second monitor.</string>
-    <string name="how_touch">Touch: tap to click, drag to drag, two-finger pan to scroll.</string>
+    <string name="how_touch">Touch: tap to click, two-finger tap for right-click, drag to move, two-finger pan to scroll. Use the floating keyboard button to type from this %1$s.</string>
     <string name="how_pen">Pen: draw with pressure and tilt. Fingers are ignored while the pen touches.</string>
+    <string name="remote_keyboard">Type to Mac</string>
     <string name="mac_app_footer">OpenDisplay needs the Mac app running on a Mac on the same WiFi network. Download it here if you haven\'t yet.</string>
     <string name="section_about">About</string>
     <string name="row_version">Version</string>

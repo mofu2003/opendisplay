@@ -29,6 +29,7 @@ final class InputInjector {
     private var penDown = false
     private var warnedMissingPermission = false
     private var loggedFirstTouch = false
+    private var loggedFirstKeyboard = false
     // A real event source (vs nil) plus non-zero clickState on down/up: menu
     // tracking treats sourceless/zero-click synthetic clicks as malformed — menus
     // open but their tracking session breaks, leaving zombie menu windows
@@ -44,21 +45,16 @@ final class InputInjector {
     private let capabilityMask: Int64 = 0x05C7       // pressure + tilt + rotation + buttons
     private var inRange = false
 
-    // Pencil-only synthetic click counting — tablet events don't get click
-    // state from the Window Server, so we mirror macOS double-click prefs here.
-    private struct PenClickSession {
-        let downLocation: CGPoint
-        let clickState: Int
-    }
-
-    private struct PenCompletedClick {
-        let upTime: CFAbsoluteTime
-        let downLocation: CGPoint
-        let clickState: Int
-    }
-
-    private var penClickSession: PenClickSession?
-    private var penLastClick: PenCompletedClick?
+    // Synthetic mouse events do not get click state from the Window Server,
+    // so both finger touches and tablet events mirror macOS double-click prefs.
+    private var touchClicks = ClickTracker(
+        interval: { SystemClickMetrics.interval },
+        distance: { SystemClickMetrics.distance }
+    )
+    private var penClicks = ClickTracker(
+        interval: { SystemClickMetrics.interval },
+        distance: { SystemClickMetrics.distance }
+    )
 
     init(displayID: CGDirectDisplayID) {
         self.displayID = displayID
@@ -96,6 +92,13 @@ final class InputInjector {
             y: bounds.origin.y + y * bounds.height
         )
 
+        if phase == "secondary" {
+            guard !isDown else { return }
+            touchClicks.cancel()
+            postSecondaryClick(at: point)
+            return
+        }
+
         let type: CGEventType
         // Click count on the release. A cancel means "a second finger joined,
         // this was a scroll, not a tap" — but there is no CGEvent for undoing a
@@ -109,16 +112,19 @@ final class InputInjector {
         case "began":
             type = .leftMouseDown
             isDown = true
+            clickState = touchClicks.begin(at: point)
         case "moved":
             type = isDown ? .leftMouseDragged : .mouseMoved
         case "ended":
             guard isDown else { return }   // spurious up without a down
             type = .leftMouseUp
             isDown = false
+            clickState = touchClicks.finish(at: point)
         case "cancelled":
             guard isDown else { return }
             type = .leftMouseUp
             isDown = false
+            touchClicks.cancel()
             clickState = 0
         default:
             return
@@ -127,7 +133,25 @@ final class InputInjector {
         guard let event = CGEvent(mouseEventSource: source, mouseType: type,
                                   mouseCursorPosition: point, mouseButton: .left) else { return }
         event.setIntegerValueField(.mouseEventClickState, value: Int64(clickState))
-        event.post(tap: .cghidEventTap)
+        post(event)
+    }
+
+    /// A two-finger tap from the receiver. Move first so context menus open
+    /// where the fingers landed even if the cursor was elsewhere.
+    private func postSecondaryClick(at point: CGPoint) {
+        if let move = CGEvent(mouseEventSource: source, mouseType: .mouseMoved,
+                              mouseCursorPosition: point, mouseButton: .left) {
+            post(move)
+        }
+
+        guard let down = CGEvent(mouseEventSource: source, mouseType: .rightMouseDown,
+                                 mouseCursorPosition: point, mouseButton: .right),
+              let up = CGEvent(mouseEventSource: source, mouseType: .rightMouseUp,
+                               mouseCursorPosition: point, mouseButton: .right) else { return }
+        down.setIntegerValueField(.mouseEventClickState, value: 1)
+        up.setIntegerValueField(.mouseEventClickState, value: 1)
+        post(down)
+        post(up)
     }
 
     /// dx/dy in display pixels, natural-scrolling sign from the phone.
@@ -140,7 +164,62 @@ final class InputInjector {
                                   wheel1: Int32((dy / scale).rounded()),
                                   wheel2: Int32((dx / scale).rounded()),
                                   wheel3: 0) else { return }
-        event.post(tap: .cghidEventTap)
+        post(event)
+    }
+
+    /// Committed text from the receiver's input method. Unicode events avoid
+    /// the sender's keyboard layout and deliver Chinese candidate results as
+    /// text instead of their raw pinyin keystrokes.
+    func handleText(_ text: String) {
+        guard canInjectKeyboardInput(), !text.isEmpty else { return }
+        logFirstKeyboardInput()
+        for character in text {
+            let units = Array(String(character).utf16)
+            guard !units.isEmpty,
+                  let down = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true),
+                  let up = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false)
+            else { continue }
+            down.keyboardSetUnicodeString(stringLength: units.count, unicodeString: units)
+            up.keyboardSetUnicodeString(stringLength: units.count, unicodeString: units)
+            post(down)
+            post(up)
+        }
+    }
+
+    /// Named keys shared with the Mac receiver's Android text path.
+    func handleKey(_ key: String) {
+        guard canInjectKeyboardInput() else { return }
+        let codes: [String: CGKeyCode] = [
+            "backspace": 51,
+            "enter": 36,
+            "tab": 48,
+            "escape": 53,
+        ]
+        guard let code = codes[key] else { return }
+        logFirstKeyboardInput()
+        if let down = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: true) {
+            post(down)
+        }
+        if let up = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: false) {
+            post(up)
+        }
+    }
+
+    private func canInjectKeyboardInput() -> Bool {
+        guard AXIsProcessTrusted() else {
+            if !warnedMissingPermission {
+                warnedMissingPermission = true
+                Log.info("keyboard input ignored: Accessibility permission missing")
+            }
+            return false
+        }
+        return true
+    }
+
+    private func logFirstKeyboardInput() {
+        guard !loggedFirstKeyboard else { return }
+        loggedFirstKeyboard = true
+        Log.info("keyboard input active on display \(displayID)")
     }
 
     func handleProximity(entering: Bool, x: Double, y: Double) {
@@ -210,8 +289,7 @@ final class InputInjector {
         ev.setIntegerValueField(.tabletProximityEventVendorPointerType, value: vendorPointerType)
         ev.setIntegerValueField(.tabletProximityEventCapabilityMask, value: capabilityMask)
         ev.setIntegerValueField(.tabletProximityEventEnterProximity, value: entering ? 1 : 0)
-        ev.flags = .maskNonCoalesced
-        ev.post(tap: .cghidEventTap)
+        post(ev, flags: .maskNonCoalesced)
     }
 
     private enum PointPhase { case down, drag, up, hover }
@@ -244,52 +322,21 @@ final class InputInjector {
         ev.setDoubleValueField(.tabletEventRotation, value: rotation)
         switch phase {
         case .down:
-            ev.setIntegerValueField(.mouseEventClickState, value: Int64(beginPenClickSession(at: p)))
+            ev.setIntegerValueField(.mouseEventClickState, value: Int64(penClicks.begin(at: p)))
         case .up:
-            ev.setIntegerValueField(.mouseEventClickState, value: Int64(finishPenClickSession(at: p)))
+            ev.setIntegerValueField(.mouseEventClickState, value: Int64(penClicks.finish(at: p)))
         case .drag, .hover:
             break
         }
-        ev.flags = .maskNonCoalesced
-        ev.post(tap: .cghidEventTap)
+        post(ev, flags: .maskNonCoalesced)
     }
 
-    private func penClickStateForMouseDown(at point: CGPoint) -> Int {
-        let now = CFAbsoluteTimeGetCurrent()
-        guard let last = penLastClick,
-              now - last.upTime <= SystemClickMetrics.interval else {
-            return 1
-        }
-        let dx = point.x - last.downLocation.x
-        let dy = point.y - last.downLocation.y
-        guard hypot(dx, dy) <= SystemClickMetrics.distance else { return 1 }
-        return last.clickState + 1
-    }
-
-    private func beginPenClickSession(at point: CGPoint) -> Int {
-        let state = penClickStateForMouseDown(at: point)
-        penClickSession = PenClickSession(downLocation: point, clickState: state)
-        return state
-    }
-
-    /// Returns click state for the matching pen mouse-up. Extends the multi-click
-    /// chain only when down→up displacement is within the system threshold.
-    private func finishPenClickSession(at upLocation: CGPoint) -> Int {
-        guard let session = penClickSession else { return 1 }
-        penClickSession = nil
-
-        let dx = upLocation.x - session.downLocation.x
-        let dy = upLocation.y - session.downLocation.y
-        if hypot(dx, dy) <= SystemClickMetrics.distance {
-            penLastClick = PenCompletedClick(
-                upTime: CFAbsoluteTimeGetCurrent(),
-                downLocation: session.downLocation,
-                clickState: session.clickState
-            )
-        } else {
-            penLastClick = nil
-        }
-        return session.clickState
+    /// Synthetic events must not inherit physical modifier keys from the HID
+    /// state table. Without this, a tap after a Command shortcut can arrive as
+    /// Command-click, and a scroll can arrive as Command-scroll.
+    private func post(_ event: CGEvent, flags: CGEventFlags = []) {
+        event.flags = flags
+        event.post(tap: .cghidEventTap)
     }
 
     /// UIKit altitude is radians from the surface (pi/2 = upright); CGEvent tilt

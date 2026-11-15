@@ -65,6 +65,15 @@ struct VideoStreamConfiguration: Equatable {
     let bitrate: Int
     let framesPerSecond: Int
 
+    /// Keep one encode in flight at 30 fps to minimise latency. At 60 fps a
+    /// single slot cannot sustain the rate once an encode outlives one frame
+    /// interval (seen at 3K on an M5), so allow a second slot below 5K. At 5K
+    /// the parallel encoder buys no throughput and only adds latency.
+    var concurrentEncodeLimit: Int {
+        let pixels = encodedSize.width * encodedSize.height
+        return framesPerSecond >= 60 && pixels < 5_120 * 2_880 ? 2 : 1
+    }
+
     enum SelectionError: LocalizedError, Equatable {
         case invalidSource
         case noCompatibleCodec
