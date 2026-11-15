@@ -181,7 +181,7 @@ Input from the receiving Mac's keyboard and mouse is a follow-up
 picks the sharpest setup it can, so you rarely need to change anything. The
 defaults are: sender on **Best**, receiver at its **Default** display
 setting, and video filling the receiver's screen (fullscreen). If you want to
-tune it, four things matter.
+tune it, these settings matter.
 
 *1. The connection.* A cable gives steadier latency than WiFi, but it does not
 need to be fast: the stream uses at most 18 Mb/s.
@@ -203,7 +203,15 @@ need to be fast: the stream uses at most 18 Mb/s.
 is faster, so motion is smoother and latency lower. The desktop's size stays
 the same.
 
-*3. Display size,* per device, in the sender's device list (the arrows
+*3. Frame rate.* **Automatic** follows the receiver's screen and decoder
+limits. The 30, 60, 90 and 120 FPS choices cap the stream at that rate; the
+receiver's limits still apply, and the encoder's throughput can lower the
+delivered rate further. Higher rates increase capture, encode and decode load,
+so they only help when both devices can sustain them. Extend mode's virtual
+display is limited to 60 FPS; Mirror can use a higher rate from the Mac's main
+display when the receiver supports it.
+
+*4. Display size,* per device, in the sender's device list (the arrows
 button next to Disconnect): **Larger Text**, **Default**, **More Space** or
 **Native (1x)**. Each choice shows the exact desktop size it gives, like
 macOS's own Displays settings. More Space and Native look a little softer

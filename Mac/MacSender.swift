@@ -83,6 +83,7 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
     private let endpointName: String
     private let mode: CaptureMode
     private let quality: StreamQuality
+    private let frameRate: FrameRateOption
     // Stable per-device serial for the virtual display, so macOS can tell
     // multiple OpenDisplay monitors apart and persist their arrangement.
     private let displaySerial: UInt32
@@ -362,12 +363,14 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
     private var baseBitrate = 0
 
     init(transport: SenderTransport, name: String, mode: CaptureMode,
-         quality: StreamQuality = .best, displaySerial: UInt32 = 0x0001,
+         quality: StreamQuality = .best, frameRate: FrameRateOption = .automatic,
+         displaySerial: UInt32 = 0x0001,
          identityOffset: UInt32 = 0, awaitingWake: Bool = false) {
         self.transport = transport
         self.endpointName = name
         self.mode = mode
         self.quality = quality
+        self.frameRate = frameRate
         self.displaySerial = displaySerial
         self.baseIdentityOffset = identityOffset
         self.awaitingWake = awaitingWake
@@ -501,7 +504,8 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
             codec: preferredCodec(for: info, source: plan.desktopPixels),
             legacyCeiling: legacyEncodeCeiling(for: info),
             videoCaps: info.videoCaps,
-            displayMaxFrameRate: info.displayMaxFrameRate)
+            displayMaxFrameRate: info.displayMaxFrameRate,
+            requestedFramesPerSecond: requestedFramesPerSecond(for: info))
         if isRefused(canvas) {
             return DesktopPolicy.oneXFallback(facts: info.facts).desktop
         }
@@ -548,8 +552,19 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
                 codec: preferredCodec(for: info, source: plan.desktopPixels),
                 legacyCeiling: legacyEncodeCeiling(for: info),
                 videoCaps: info.videoCaps,
-                displayMaxFrameRate: info.displayMaxFrameRate)
+                displayMaxFrameRate: info.displayMaxFrameRate,
+                requestedFramesPerSecond: requestedFramesPerSecond(for: info))
         }
+    }
+
+    /// The user's choice resolved against the receiver's advertised display
+    /// ceiling. Missing means the legacy 60 FPS contract, never 120.
+    private func requestedFramesPerSecond(for info: PhoneInfo,
+                                          sourceMaximum: Int? = nil) -> Int {
+        let source = sourceMaximum
+            ?? (mode == .extend ? VirtualDisplay.maximumRefreshRate : nil)
+        return frameRate.request(displayMaximum: info.displayMaxFrameRate,
+                                 sourceMaximum: source)
     }
 
     /// 2x desktops macOS refused on this session's display (#292); the
@@ -592,7 +607,8 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
             source: source, quality: .best, codec: codec,
             receiverCapabilities: info.videoCaps,
             displayMaxFrameRate: info.displayMaxFrameRate,
-            presentable: info.facts.pixels) else { return codec }
+            presentable: info.facts.pixels,
+            requestedFramesPerSecond: requestedFramesPerSecond(for: info)) else { return codec }
         if Self.canEncodeHEVC(best.encodedSize) { return codec }
         return VideoStreamConfiguration.h264Codec
     }
@@ -1291,6 +1307,10 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
         // the desktop; presets keep scaling from the desktop as the receiver
         // presents it (#322).
         let presentable = info.facts.pixels
+        let mirrorRefreshRate = mode == .mirror
+            ? Int((CGDisplayCopyDisplayMode(display.displayID)?.refreshRate ?? 0).rounded())
+            : 0
+        let sourceMaximum = mirrorRefreshRate > 0 ? mirrorRefreshRate : nil
         func select(_ codec: String) throws -> VideoStreamConfiguration {
             mode == .extend
                 ? try VideoStreamConfiguration.makeForCanvas(
@@ -1301,7 +1321,9 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
                     legacyCeiling: legacyCeiling,
                     receiverCapabilities: info.videoCaps,
                     displayMaxFrameRate: info.displayMaxFrameRate,
-                    presentable: presentable)
+                    presentable: presentable,
+                    requestedFramesPerSecond: requestedFramesPerSecond(
+                        for: info, sourceMaximum: sourceMaximum))
                 : try VideoStreamConfiguration.make(
                     source: source,
                     quality: quality,
@@ -1309,7 +1331,9 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
                     legacyCeiling: legacyCeiling,
                     receiverCapabilities: info.videoCaps,
                     displayMaxFrameRate: info.displayMaxFrameRate,
-                    presentable: presentable)
+                    presentable: presentable,
+                    requestedFramesPerSecond: requestedFramesPerSecond(
+                        for: info, sourceMaximum: sourceMaximum))
         }
         var selected = try select(preferredCodec(for: info, source: source))
         var pixelsWide = selected.encodedSize.width
@@ -1409,8 +1433,8 @@ final class MacSender: NSObject, SCStreamOutput, SCStreamDelegate {
         default: kind = rawKind
         }
         await status(mode == .extend
-            ? String(localized: "Extending to \(kind) (\(pixelsWide)×\(pixelsHigh))")
-            : String(localized: "Mirroring to \(kind) (\(pixelsWide)×\(pixelsHigh))"))
+            ? String(localized: "Extending to \(kind) (\(pixelsWide)×\(pixelsHigh) @ \(chosen.framesPerSecond) fps)")
+            : String(localized: "Mirroring to \(kind) (\(pixelsWide)×\(pixelsHigh) @ \(chosen.framesPerSecond) fps)"))
     }
 
     /// Mirror mode always shows the Mac's own main display. `SCShareableContent`

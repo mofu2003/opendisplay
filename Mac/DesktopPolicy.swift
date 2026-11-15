@@ -169,13 +169,15 @@ enum DesktopPolicy {
                        codec: String = VideoStreamConfiguration.h264Codec,
                        legacyCeiling: PixelSize? = nil,
                        videoCaps: [VideoCapability]? = nil,
-                       displayMaxFrameRate: Int? = nil) -> VirtualCanvasSize {
+                       displayMaxFrameRate: Int? = nil,
+                       requestedFramesPerSecond: Int = VideoStreamConfiguration.defaultFramesPerSecond) -> VirtualCanvasSize {
         guard !plan.explicit else { return plan.desktop }
         let desktop = plan.desktopPixels
         let best = VideoStreamConfiguration.canvasPixels(
             forReceiver: desktop, codec: codec, legacyCeiling: legacyCeiling,
             presentable: plan.presentable, receiverCapabilities: videoCaps,
-            displayMaxFrameRate: displayMaxFrameRate)
+            displayMaxFrameRate: displayMaxFrameRate,
+            requestedFramesPerSecond: requestedFramesPerSecond)
         guard best.width < desktop.width || best.height < desktop.height else { return plan.desktop }
         let scale = plan.desktop.scale
         return VirtualCanvasSize(pointsWide: even(best.width / scale),
@@ -190,14 +192,17 @@ enum DesktopPolicy {
                         codec: String = VideoStreamConfiguration.h264Codec,
                         legacyCeiling: PixelSize? = nil,
                         videoCaps: [VideoCapability]? = nil,
-                        displayMaxFrameRate: Int? = nil) -> DisplaySizeOutcome {
+                        displayMaxFrameRate: Int? = nil,
+                        requestedFramesPerSecond: Int = VideoStreamConfiguration.defaultFramesPerSecond) -> DisplaySizeOutcome {
         let canvas = self.canvas(for: plan, codec: codec, legacyCeiling: legacyCeiling,
-                                 videoCaps: videoCaps, displayMaxFrameRate: displayMaxFrameRate)
+                                 videoCaps: videoCaps, displayMaxFrameRate: displayMaxFrameRate,
+                                 requestedFramesPerSecond: requestedFramesPerSecond)
         let pixels = PixelSize(width: canvas.pixelsWide, height: canvas.pixelsHigh)
         let stream = try? VideoStreamConfiguration.makeForCanvas(
             pixels, panel: plan.streamReference, quality: quality, codec: codec,
             legacyCeiling: legacyCeiling, receiverCapabilities: videoCaps,
-            displayMaxFrameRate: displayMaxFrameRate, presentable: plan.presentable)
+            displayMaxFrameRate: displayMaxFrameRate, presentable: plan.presentable,
+            requestedFramesPerSecond: requestedFramesPerSecond)
         return DisplaySizeOutcome(choice: choice, desktop: canvas,
                                   sent: stream?.encodedSize ?? pixels)
     }

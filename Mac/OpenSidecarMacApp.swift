@@ -230,6 +230,10 @@ final class SenderController: ObservableObject {
     @Published var quality = StreamQuality(rawValue: UserDefaults.standard.string(forKey: "quality") ?? "") ?? .best {
         didSet { UserDefaults.standard.set(quality.rawValue, forKey: "quality") }
     }
+    @Published var frameRate = FrameRateOption(
+        rawValue: UserDefaults.standard.integer(forKey: "frameRate")) ?? .automatic {
+        didSet { UserDefaults.standard.set(frameRate.rawValue, forKey: "frameRate") }
+    }
 
     var running: Bool { !sessions.isEmpty }
 
@@ -747,7 +751,8 @@ final class SenderController: ObservableObject {
 
         let name = label(for: target)
         let sender = MacSender(transport: transport, name: name, mode: mode,
-                               quality: quality, displaySerial: Self.displaySerial(for: id),
+                               quality: quality, frameRate: frameRate,
+                               displaySerial: Self.displaySerial(for: id),
                                identityOffset: identityOffset(for: id),
                                awaitingWake: awaitingWake)
         let session = DeviceSession(id: id, target: target, name: name, sender: sender)
@@ -887,7 +892,8 @@ final class SenderController: ObservableObject {
         sessions.removeAll { $0.id == session.id }
     }
 
-    /// Mode/quality apply per-pipeline at construction — rebuild every session.
+    /// Mode, quality and frame-rate cap apply per-pipeline at construction —
+    /// rebuild every session.
     func restartAll() {
         guard running else { return }
         let targets = sessions.map(\.target)
@@ -1158,6 +1164,23 @@ struct ContentView: View {
                     Text(controller.quality.explanation)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("Frame rate", selection: $controller.frameRate) {
+                        ForEach(FrameRateOption.allCases) { rate in
+                            Text(rate.label).tag(rate)
+                        }
+                    }
+                    .onChange(of: controller.frameRate) { controller.restartAll() }
+                    Text(controller.frameRate.explanation)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if controller.mode == .extend {
+                        Text("Extend mode's virtual display is limited to 60 fps.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 4) {

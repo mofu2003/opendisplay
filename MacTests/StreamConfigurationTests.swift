@@ -129,6 +129,27 @@ final class StreamConfigurationTests: XCTestCase {
         XCTAssertEqual(config.framesPerSecond, 28)
     }
 
+    func testRequestedFramesPerSecondFlowsThroughCodecAndDisplayCaps() throws {
+        let caps = [VideoCapability(codec: "h264", maxFrameRate: 90)]
+        let low = try VideoStreamConfiguration.make(
+            source: PixelSize(width: 1920, height: 1080), quality: .best,
+            receiverCapabilities: caps, displayMaxFrameRate: 120,
+            requestedFramesPerSecond: 30)
+        XCTAssertEqual(low.framesPerSecond, 30)
+
+        let displayLimited = try VideoStreamConfiguration.make(
+            source: PixelSize(width: 1920, height: 1080), quality: .best,
+            receiverCapabilities: caps, displayMaxFrameRate: 60,
+            requestedFramesPerSecond: 120)
+        XCTAssertEqual(displayLimited.framesPerSecond, 60)
+
+        let decoderLimited = try VideoStreamConfiguration.make(
+            source: PixelSize(width: 1920, height: 1080), quality: .best,
+            receiverCapabilities: [VideoCapability(codec: "h264", maxFrameRate: 90)],
+            displayMaxFrameRate: 120, requestedFramesPerSecond: 120)
+        XCTAssertEqual(decoderLimited.framesPerSecond, 90)
+    }
+
     func testMultipleCapabilityEntriesAreAlternatives() throws {
         let caps = [
             VideoCapability(codec: "future", maxWidth: 8000, maxHeight: 8000),

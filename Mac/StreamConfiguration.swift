@@ -201,12 +201,14 @@ struct VideoStreamConfiguration: Equatable {
                              legacyCeiling: PixelSize? = nil,
                              presentable: PixelSize? = nil,
                              receiverCapabilities: [VideoCapability]? = nil,
-                             displayMaxFrameRate: Int? = nil) -> PixelSize {
+                             displayMaxFrameRate: Int? = nil,
+                             requestedFramesPerSecond: Int = defaultFramesPerSecond) -> PixelSize {
         guard let best = try? make(source: panel, quality: .best, codec: codec,
                                    legacyCeiling: legacyCeiling,
                                    receiverCapabilities: receiverCapabilities,
                                    displayMaxFrameRate: displayMaxFrameRate,
-                                   presentable: presentable)
+                                   presentable: presentable,
+                                   requestedFramesPerSecond: requestedFramesPerSecond)
         else { return panel }
         return best.encodedSize
     }
@@ -223,18 +225,21 @@ struct VideoStreamConfiguration: Equatable {
                               legacyCeiling: PixelSize? = nil,
                               receiverCapabilities: [VideoCapability]? = nil,
                               displayMaxFrameRate: Int? = nil,
-                              presentable: PixelSize? = nil) throws -> Self {
+                              presentable: PixelSize? = nil,
+                              requestedFramesPerSecond: Int = defaultFramesPerSecond) throws -> Self {
         let fromCanvas = try make(source: canvas, quality: quality, codec: codec,
                                   legacyCeiling: legacyCeiling,
                                   receiverCapabilities: receiverCapabilities,
                                   displayMaxFrameRate: displayMaxFrameRate,
-                                  presentable: presentable)
+                                  presentable: presentable,
+                                  requestedFramesPerSecond: requestedFramesPerSecond)
         guard panel != canvas,
               let fromPanel = try? make(source: panel, quality: quality, codec: codec,
                                         legacyCeiling: legacyCeiling,
                                         receiverCapabilities: receiverCapabilities,
                                         displayMaxFrameRate: displayMaxFrameRate,
-                                        presentable: presentable),
+                                        presentable: presentable,
+                                        requestedFramesPerSecond: requestedFramesPerSecond),
               fromPanel.encodedSize.width <= canvas.width,
               fromPanel.encodedSize.height <= canvas.height,
               fromPanel.encodedSize.width * fromPanel.encodedSize.height

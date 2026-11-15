@@ -12,6 +12,8 @@ final class VirtualDisplay {
     // list can be replaced. Keep defensive 8K headroom in addition to the
     // requested capacity supplied by the canvas plan.
     private static let reservedPixelsPerAxis = 8_192
+    /// The private API documents a 60 Hz mode ceiling.
+    static let maximumRefreshRate = 60
 
     private let display: CGVirtualDisplay
     private var settings: CGVirtualDisplaySettings
@@ -79,7 +81,8 @@ final class VirtualDisplay {
         settings = CGVirtualDisplaySettings()
         settings.hiDPI = self.scale == 2 ? 1 : 0
         settings.modes = [
-            CGVirtualDisplayMode(width: UInt(pointsWide), height: UInt(pointsHigh), refreshRate: 60)
+            CGVirtualDisplayMode(width: UInt(pointsWide), height: UInt(pointsHigh),
+                                 refreshRate: CGFloat(Self.maximumRefreshRate))
         ]
         guard display.apply(settings) else {
             Log.info("CGVirtualDisplay applySettings FAILED")
@@ -136,7 +139,8 @@ final class VirtualDisplay {
         let newSettings = CGVirtualDisplaySettings()
         newSettings.hiDPI = scale == 2 ? 1 : 0
         newSettings.modes = [
-            CGVirtualDisplayMode(width: UInt(pointsWide), height: UInt(pointsHigh), refreshRate: 60)
+            CGVirtualDisplayMode(width: UInt(pointsWide), height: UInt(pointsHigh),
+                                 refreshRate: CGFloat(Self.maximumRefreshRate))
         ]
         // The enforcement tick must not run between the new mode and its
         // placement: it would re-apply the old origin target, or report

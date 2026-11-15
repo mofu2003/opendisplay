@@ -11,6 +11,13 @@
 "Extend" = "扩展";
 "Mirror" = "镜像";
 "Quality" = "画质";
+"Frame rate" = "帧率";
+"Automatic" = "自动";
+"Follow the receiver's screen and decoder limits." = "自动跟随接收设备屏幕与解码器支持的上限。";
+"Reduce system load and make the stream more stable." = "降低系统负载，提高串流稳定性。";
+"A smooth default for most devices." = "适用于大多数设备的流畅默认值。";
+"Smoother motion when both devices support it; otherwise the stream is capped automatically." = "两端都支持时提供更流畅的动态画面，否则会自动降到可用上限。";
+"Extend mode's virtual display is limited to 60 fps." = "扩展模式的虚拟显示器当前最高支持 60 帧/秒。";
 "Best" = "最佳";
 "Balanced" = "均衡";
 "Fast" = "流畅";
@@ -79,8 +86,8 @@
 "Waiting for the device to connect…" = "正在等待设备连接…";
 "Waiting for receiver at %@…" = "正在等待接收端 %@…";
 "Stream reconfiguration failed: %@" = "串流重新配置失败：%@";
-"Extending to %@ (%lld×%lld)" = "正在扩展到 %@（%lld×%lld）";
-"Mirroring to %@ (%lld×%lld)" = "正在镜像到 %@（%lld×%lld）";
+"Extending to %@ (%lld×%lld @ %lld fps)" = "正在扩展到 %@（%lld×%lld @ %lld 帧/秒）";
+"Mirroring to %@ (%lld×%lld @ %lld fps)" = "正在镜像到 %@（%lld×%lld @ %lld 帧/秒）";
 "Capture stopped: %@" = "屏幕采集已停止：%@";
 "Connected to %@" = "已连接到 %@";
 "Waiting for a USB device — plug in the iPhone or iPad…" = "正在等待 USB 设备，请连接 iPhone 或 iPad…";
