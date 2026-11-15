@@ -74,7 +74,7 @@
     <string name="section_diagnostics">Diagnostics</string>
     <string name="connection_log">Connection log</string>
     <string name="log_empty">Nothing logged yet.</string>
-    <string name="diagnostics_footer">What this %1$s saw while connecting: sessions, restarts, decoder trouble. No screen content and nothing leaves the %1$s unless you share it. Attach it to a GitHub issue if a connection won\'t come up.</string>
+    <string name="diagnostics_footer">What this %1$s saw while connecting: sessions, restarts, decoder trouble. No screen content and nothing leaves the %1$s unless you share it. Save the log if you need to troubleshoot a connection.</string>
     <string name="section_how">How to connect</string>
     <string name="how_wifi">WiFi: both devices on the same network, then pick this %1$s in OpenDisplay on your computer.</string>
     <string name="how_rotate">Rotate the %1$s for a vertical second monitor.</string>
@@ -85,7 +85,6 @@
     <string name="row_version">Version</string>
     <string name="check_for_updates">Check for updates</string>
     <string name="check_for_updates_summary">Automatically checks at launch; download and install here anytime.</string>
-    <string name="link_github">Project repository</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_up_to_date">You have the latest version.</string>
     <string name="update_available_title">Update available</string>

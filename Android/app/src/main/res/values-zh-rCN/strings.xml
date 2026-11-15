@@ -35,7 +35,7 @@
     <string name="section_diagnostics">诊断</string>
     <string name="connection_log">连接日志</string>
     <string name="log_empty">暂无日志。</string>
-    <string name="diagnostics_footer">记录这台%1$s连接过程中的会话、重启和解码问题，不包含屏幕内容。除非主动分享，否则日志不会离开此%1$s。连接失败时，可将日志附在 GitHub 问题报告中。</string>
+    <string name="diagnostics_footer">记录这台%1$s连接过程中的会话、重启和解码问题，不包含屏幕内容。除非主动分享，否则日志不会离开此%1$s。连接失败时可保存日志用于排查问题。</string>
     <string name="section_how">连接方法</string>
     <string name="how_wifi">WiFi：将两台设备连接到同一网络，然后在电脑端 OpenDisplay 中选择这台%1$s。</string>
     <string name="how_rotate">旋转%1$s即可使用竖向扩展屏。</string>
@@ -46,7 +46,6 @@
     <string name="row_version">版本</string>
     <string name="check_for_updates">检查更新</string>
     <string name="check_for_updates_summary">启动时自动检查；也可随时在这里下载并安装。</string>
-    <string name="link_github">项目仓库</string>
     <string name="update_checking">正在检查更新…</string>
     <string name="update_up_to_date">当前已是最新版本。</string>
     <string name="update_available_title">发现新版本</string>

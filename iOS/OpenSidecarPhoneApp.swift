@@ -338,10 +338,6 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("showAnalytics") private var showAnalytics = false
     @AppStorage("metalRenderer") private var metalRenderer = false
-    // Set once the user tapped "Rate on the App Store": the row is an
-    // invitation, not a permanent fixture.
-    @AppStorage("rateAppTapped") private var rateAppTapped = false
-    @Environment(\.openURL) private var openURL
 
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
@@ -350,20 +346,6 @@ struct SettingsView: View {
     var body: some View {
         AdaptiveNavigation {
             Form {
-                if !rateAppTapped {
-                    Section {
-                        Button {
-                            // Hide only once the App Store actually opened
-                            // (it can be restricted by Screen Time).
-                            openURL(AppStore.reviewURL) { accepted in
-                                if accepted { rateAppTapped = true }
-                            }
-                        } label: {
-                            Label("Rate OpenDisplay on the App Store", systemImage: "star")
-                        }
-                    }
-                }
-
                 Section("Status") {
                     LabeledRow("Listening", value: "Port 9000")
                     LabeledRow("Connection",
@@ -417,7 +399,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Diagnostics")
                 } footer: {
-                    Text("What this \(deviceKind) saw while connecting: sessions, restarts, decoder trouble. No screen content and nothing leaves the \(deviceKind) unless you share it. Attach it to a GitHub issue if a connection won't come up.")
+                    Text("What this \(deviceKind) saw while connecting: sessions, restarts, decoder trouble. No screen content and nothing leaves the \(deviceKind) unless you share it. Save the log if you need to troubleshoot a connection.")
                 }
 
                 Section {
@@ -443,13 +425,6 @@ struct SettingsView: View {
 
                 Section("About") {
                     LabeledRow("Version", value: version)
-                    Link(destination: URL(string: "https://github.com/mofu2003/opendisplay")!) {
-                        Label("Project repository", systemImage: "link")
-                    }
-                    // Permanent counterpart of the one-time row at the top.
-                    Link(destination: AppStore.reviewURL) {
-                        Label("Rate on the App Store", systemImage: "star")
-                    }
                 }
             }
             .navigationTitle("OpenDisplay")

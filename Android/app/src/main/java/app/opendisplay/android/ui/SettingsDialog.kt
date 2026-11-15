@@ -172,8 +172,6 @@ class SettingsDialog : DialogFragment() {
                         true
                     }
                 })
-                addPreference(link(R.string.link_github,
-                    "https://github.com/mofu2003/opendisplay", null))
             }
         }
 
