@@ -175,7 +175,7 @@ def update_android(
             "versionName": version_name,
             "apkUrl": asset_url(repo, tag, apk_asset["name"]),
             "sha256": actual_sha,
-            "notes": release.get("body", "").strip()[:1200],
+            "notes": release.get("body", "").strip(),
         }
         target = public_dir / "android-version.json"
         rendered = json.dumps(manifest, ensure_ascii=False, indent=2) + "\n"
