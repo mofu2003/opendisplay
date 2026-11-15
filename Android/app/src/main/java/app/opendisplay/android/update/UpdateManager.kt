@@ -12,7 +12,6 @@ import android.provider.Settings
 import androidx.core.content.FileProvider
 import app.opendisplay.android.Log
 import app.opendisplay.android.R
-import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -36,20 +35,12 @@ class UpdateManager(
     interface Listener {
         fun onChecking(manual: Boolean)
         fun onUpToDate(manual: Boolean)
-        fun onUpdateAvailable(release: Release, manual: Boolean)
-        fun onDownloadProgress(release: Release, downloaded: Long, total: Long)
-        fun onDownloadReady(release: Release, file: File)
+        fun onUpdateAvailable(release: UpdateRelease, manual: Boolean)
+        fun onDownloadProgress(release: UpdateRelease, downloaded: Long, total: Long)
+        fun onDownloadReady(release: UpdateRelease, file: File, automatic: Boolean)
         fun onInstallPermissionRequired(file: File)
         fun onError(message: String, manual: Boolean)
     }
-
-    data class Release(
-        val versionCode: Int,
-        val versionName: String,
-        val apkUrl: String,
-        val sha256: String,
-        val notes: String?,
-    )
 
     private val context: Context = activity.applicationContext
     private val main = Handler(Looper.getMainLooper())
@@ -57,9 +48,12 @@ class UpdateManager(
         Thread(runnable, "od-update").apply { isDaemon = true }
     }
     @Volatile private var closed = false
+    @Volatile private var checking = false
     @Volatile private var downloading = false
 
     fun check(manual: Boolean) {
+        if (checking) return
+        checking = true
         post { listener.onChecking(manual) }
         io.execute {
             val result = try {
@@ -72,17 +66,19 @@ class UpdateManager(
             } catch (error: Exception) {
                 Log.w(TAG, "update check failed", error)
                 post { listener.onError(error.message ?: context.getString(R.string.update_error_network), manual) }
+            } finally {
+                checking = false
             }
         }
     }
 
-    fun download(release: Release, manual: Boolean) {
+    fun download(release: UpdateRelease, manual: Boolean) {
         if (downloading) return
         downloading = true
         io.execute {
             try {
                 val file = downloadFile(release)
-                post { listener.onDownloadReady(release, file) }
+                post { listener.onDownloadReady(release, file, automatic = !manual) }
             } catch (error: Exception) {
                 Log.w(TAG, "update download failed", error)
                 post { listener.onError(error.message ?: context.getString(R.string.update_error_download), manual) }
@@ -137,7 +133,7 @@ class UpdateManager(
         main.removeCallbacksAndMessages(null)
     }
 
-    private fun fetchRelease(): Release {
+    private fun fetchRelease(): UpdateRelease {
         // raw.githubusercontent.com sits behind a CDN that can keep serving the
         // previous main-branch manifest for a few minutes. A changing query
         // string makes the manifest check fetch the current object.
@@ -145,28 +141,17 @@ class UpdateManager(
         val connection = open(url, "application/json")
         try {
             val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-            val obj = JSONObject(body)
-            val code = obj.getInt("versionCode")
-            val name = obj.getString("versionName").trim()
-            val apkUrl = obj.getString("apkUrl").trim()
-            val sha = obj.getString("sha256").trim().lowercase(Locale.US)
-            if (code <= 0 || name.isEmpty() || !apkUrl.startsWith("https://") ||
-                !sha.matches(Regex("^[0-9a-f]{64}$"))) {
+            return try {
+                UpdateManifest.parse(body)
+            } catch (_: Exception) {
                 throw IOException(context.getString(R.string.update_error_manifest))
             }
-            return Release(
-                versionCode = code,
-                versionName = name,
-                apkUrl = apkUrl,
-                sha256 = sha,
-                notes = obj.optString("notes").trim().takeIf { it.isNotEmpty() },
-            )
         } finally {
             connection.disconnect()
         }
     }
 
-    private fun downloadFile(release: Release): File {
+    private fun downloadFile(release: UpdateRelease): File {
         val dir = File(context.cacheDir, "updates").apply { mkdirs() }
         val target = File(dir, "OpenDisplay-${release.versionCode}.apk")
         if (target.isFile && fileSha256(target) == release.sha256) {
@@ -254,9 +239,9 @@ class UpdateManager(
     }
 
     @Suppress("DEPRECATION")
-    private fun currentVersionCode(): Int {
+    private fun currentVersionCode(): Long {
         val info = context.packageManager.getPackageInfo(context.packageName, 0)
-        return if (Build.VERSION.SDK_INT >= 28) info.longVersionCode.toInt() else info.versionCode
+        return if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
     }
 
     private fun fileSha256(file: File): String {

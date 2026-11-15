@@ -1,8 +1,8 @@
 {
-  "_comment": "Android sideload update manifest for the mofu2003 fork. Update this after publishing a signed APK.",
+  "_comment": "Generated from the latest mofu2003/opendisplay GitHub release with a signed OpenDisplay-Android.apk asset.",
   "versionCode": 8,
   "versionName": "1.30.3-zh.7",
   "apkUrl": "https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.7/OpenDisplay-Android.apk",
   "sha256": "67dbc1b9d32cfaf9ca9b22cbde4f33d17cdde21983e288ba417c6e69754b5854",
-  "notes": "移除界面中的项目仓库、应用商店评分和 GitHub 问题入口，保留源码版权、GPL 许可证、远程输入法及更新功能。"
+  "notes": "界面清理：\n- 移除“项目仓库”、应用商店评分和 GitHub 问题入口。\n- 保留源码版权声明、修改声明、GPL-3.0 许可证和自动更新功能。\n- 版本：1.30.3-zh.7。"
 }

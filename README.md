@@ -561,9 +561,9 @@ our own infrastructure:
 
 ### Maintainer prerequisites (before auto-update goes live)
 
-Auto-update is **scaffolded but inert** until the signing keys are in place.
-The private signing key is **never** committed — it lives only as a CI
-secret. To switch it on:
+Both apps use the EdDSA key already configured in this fork. The private
+signing key is **never** committed — it lives only as a CI secret. To rotate
+or recreate the key:
 
 1. **Generate the key pair.** Run Sparkle's `generate_keys` once (it ships
    in the Sparkle SPM artifact bundle and in the release tarball at
@@ -576,19 +576,21 @@ secret. To switch it on:
    secret (export it with `generate_keys -x private_key.pem` if needed). The
    appcast step in `release.yml` no-ops gracefully while this secret is
    absent, so releases keep working until you're ready.
-4. The **first appcast publishes on the next release** after both keys are
-   set. Confirm the raw GitHub appcast URL resolves, then **test the full
-   update flow on a real signed/notarized build** (check → download → verify
-   → relaunch) — this can't be validated in CI.
+4. Confirm the raw GitHub appcast URL resolves, then test the full update flow
+   on a real build (check → download → verify → relaunch). The
+   `Sync macOS update feeds` workflow rebuilds the feeds from published
+   release assets after a release, every six hours, or on demand.
 
 ### Android APK (this fork)
 
 The Android receiver checks `public/android-version.json` from this fork at
-launch and from **Settings → About → Check for updates**. It downloads the
-signed GitHub Release APK, verifies its SHA-256, and hands it to Android's
-package installer. Android always asks the user to confirm the install;
-since sideloaded APKs cannot self-replace silently, the automatic part ends
-at the system prompt. `Android/README.md` documents the release steps.
+launch, when returning to the foreground, and from **Settings → About → Check
+for updates**. It downloads the signed GitHub Release APK, verifies its
+SHA-256, and opens Android's package installer automatically. Android always
+asks the user to confirm the install; since sideloaded APKs cannot
+self-replace silently, the automatic part ends at the system prompt.
+`Sync Android update feed` regenerates the manifest from release assets.
+`Android/README.md` documents the flow.
 
 ## Contributing
 

@@ -109,7 +109,7 @@ class InputAccessibilityService : AccessibilityService() {
     }
 
     private fun paste(text: String) {
-        val clipboard = getSystemService(ClipboardManager::class.java)
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
         clipboard?.setPrimaryClip(ClipData.newPlainText("OpenDisplay", text))
         rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
             ?.performAction(AccessibilityNodeInfo.ACTION_PASTE)
@@ -190,6 +190,7 @@ class InputAccessibilityService : AccessibilityService() {
     }
 
     private fun dispatch(path: Path, durationMs: Long) {
+        if (Build.VERSION.SDK_INT < 24) return
         val stroke = GestureDescription.StrokeDescription(path, 0, durationMs)
         val gesture = GestureDescription.Builder().addStroke(stroke).build()
         dispatchGesture(gesture, null, null)

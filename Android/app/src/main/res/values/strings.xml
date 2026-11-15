@@ -84,7 +84,7 @@
     <string name="section_about">About</string>
     <string name="row_version">Version</string>
     <string name="check_for_updates">Check for updates</string>
-    <string name="check_for_updates_summary">Automatically checks at launch; download and install here anytime.</string>
+    <string name="check_for_updates_summary">Checks automatically in the background, downloads verified updates, and opens Android’s installer.</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_up_to_date">You have the latest version.</string>
     <string name="update_available_title">Update available</string>

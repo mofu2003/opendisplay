@@ -59,18 +59,19 @@ Dev") next to a release build.
 
 Sideloaded release APKs check
 `public/android-version.json` in the `mofu2003/opendisplay` fork at launch
-(at most once every six hours) and from **Settings → About → Check for
-updates**. The manifest points at the signed `OpenDisplay-Android.apk` asset
-on a GitHub Release.
+and whenever the app returns to the foreground (at most once every six
+hours), and from **Settings → About → Check for updates**. The manifest points
+at the signed `OpenDisplay-Android.apk` asset on a GitHub Release.
 
 The app downloads into its cache, verifies the manifest's SHA-256, then opens
-Android's package installer. Android always shows the final install prompt;
-silent self-replacement is not permitted. On Android 8 and newer the user
-must also allow **Install unknown apps** for OpenDisplay once.
+Android's package installer automatically. Android always shows the final
+install prompt; silent self-replacement is not permitted. On Android 8 and
+newer the user must also allow **Install unknown apps** for OpenDisplay once.
 
-After publishing a new APK, update `versionCode`, `versionName`, `apkUrl`,
-`sha256`, and `notes` in `public/android-version.json`. Keep the signing key
-stable or Android will reject the upgrade.
+The `Sync Android update feed` workflow rebuilds `public/android-version.json`
+from the newest published release that has a signed APK. It runs after a
+release, on a schedule, and on demand. Keep the signing key stable or Android
+will reject the upgrade.
 
 ## Connecting
 

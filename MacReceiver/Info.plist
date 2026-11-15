@@ -34,6 +34,10 @@
 	<string>NSApplication</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>21600</integer>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/mofu2003/opendisplay/main/public/appcast-receiver.xml</string>
 	<key>SUPublicEDKey</key>

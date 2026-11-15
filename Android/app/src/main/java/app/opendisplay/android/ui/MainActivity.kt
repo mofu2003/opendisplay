@@ -46,6 +46,7 @@ import app.opendisplay.android.protocol.TouchGestures
 import app.opendisplay.android.protocol.VideoCap
 import app.opendisplay.android.protocol.WireProtocol
 import app.opendisplay.android.update.UpdateManager
+import app.opendisplay.android.update.UpdateRelease
 import app.opendisplay.android.video.DecoderCaps
 import app.opendisplay.android.video.StreamStats
 import app.opendisplay.android.video.VideoDecoder
@@ -171,6 +172,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     override fun onResume() {
         super.onResume()
         shake.start()
+        main.postDelayed({ maybeCheckForUpdates() }, 1_000)
         pendingUpdateFile?.let { file ->
             if (Build.VERSION.SDK_INT < 26 || packageManager.canRequestPackageInstalls()) {
                 pendingUpdateFile = null
@@ -248,6 +250,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
             .setOnDismissListener {
                 prefs.onboardingDismissed = true
                 onboarding = null
+                maybeCheckForUpdates()
             }
             .show()
     }
@@ -336,9 +339,16 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
             if (manual) Toast.makeText(this@MainActivity, R.string.update_up_to_date, Toast.LENGTH_SHORT).show()
         }
 
-        override fun onUpdateAvailable(release: UpdateManager.Release, manual: Boolean) {
+        override fun onUpdateAvailable(release: UpdateRelease, manual: Boolean) {
             prefs.lastUpdateCheck = System.currentTimeMillis()
             if (isFinishing || isDestroyed) return
+            if (!manual) {
+                // Automatic updates download in the background and then open
+                // Android's installer. The system still owns the final
+                // confirmation, but the user does not need to start it.
+                startUpdateDownload(release, automatic = true)
+                return
+            }
             updateDialog?.dismiss()
             val notes = release.notes?.takeIf { it.isNotBlank() }?.let { "\n\n$it" } ?: ""
             updateDialog = MaterialAlertDialogBuilder(this@MainActivity)
@@ -349,7 +359,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
                 .show()
         }
 
-        override fun onDownloadProgress(release: UpdateManager.Release, downloaded: Long, total: Long) {
+        override fun onDownloadProgress(release: UpdateRelease, downloaded: Long, total: Long) {
             val text = if (total > 0) {
                 getString(R.string.update_progress, ((downloaded * 100) / total).toInt().coerceIn(0, 100))
             } else {
@@ -358,10 +368,18 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
             downloadDialog?.setMessage(text)
         }
 
-        override fun onDownloadReady(release: UpdateManager.Release, file: File) {
+        override fun onDownloadReady(
+            release: UpdateRelease,
+            file: File,
+            automatic: Boolean,
+        ) {
             downloadDialog?.dismiss()
             downloadDialog = null
             if (isFinishing || isDestroyed) return
+            if (automatic) {
+                updates.install(file)
+                return
+            }
             MaterialAlertDialogBuilder(this@MainActivity)
                 .setTitle(R.string.update_ready_title)
                 .setMessage(R.string.update_ready_message)
@@ -386,6 +404,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         }
 
         override fun onError(message: String, manual: Boolean) {
+            prefs.lastUpdateCheck = System.currentTimeMillis()
             downloadDialog?.dismiss()
             downloadDialog = null
             if (!manual || isFinishing || isDestroyed) return
@@ -397,14 +416,17 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         }
     }
 
-    private fun startUpdateDownload(release: UpdateManager.Release) {
+    private fun startUpdateDownload(
+        release: UpdateRelease,
+        automatic: Boolean = false,
+    ) {
         downloadDialog?.dismiss()
         downloadDialog = MaterialAlertDialogBuilder(this)
             .setTitle(R.string.update_downloading)
             .setMessage(getString(R.string.update_progress, 0))
             .setCancelable(false)
             .show()
-        updates.download(release, manual = true)
+        updates.download(release, manual = !automatic)
     }
 
     private fun maybeCheckForUpdates() {

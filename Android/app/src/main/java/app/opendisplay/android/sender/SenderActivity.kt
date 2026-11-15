@@ -128,7 +128,7 @@ class SenderActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        multicast = (getSystemService(Context.WIFI_SERVICE) as WifiManager)
+        multicast = (applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             .createMulticastLock("open-display-discovery").also { it.acquire() }
     }
 

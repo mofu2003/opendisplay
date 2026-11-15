@@ -76,6 +76,11 @@ targets:
         # Background checks read the fork feed above and verify it with the
         # fork key, so an upstream release can never replace this build.
         SUEnableAutomaticChecks: true
+        # Download in the background and install the verified update the next
+        # time the app quits, even when the user never opens the menu.
+        SUAutomaticallyUpdate: true
+        # Six-hour checks keep the fork feed responsive without polling.
+        SUScheduledCheckInterval: 21600
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.peetzweg.opensidecar.mac
@@ -133,6 +138,8 @@ targets:
         SUFeedURL: https://raw.githubusercontent.com/mofu2003/opendisplay/main/public/appcast-receiver.xml
         SUPublicEDKey: 6UtPbiJyqWFo8rmlHV+D4giUbYtrfi0jjjMm9G4O/h0=
         SUEnableAutomaticChecks: true
+        SUAutomaticallyUpdate: true
+        SUScheduledCheckInterval: 21600
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.peetzweg.opensidecar.mac.receiver

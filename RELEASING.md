@@ -221,11 +221,14 @@ A clean average does not excuse severe tail latency or recovery failures.
 - [ ] Both DMGs and contained apps pass signature, notarization, and Gatekeeper
       checks.
 - [ ] The release contains `OpenDisplay-Android.apk` and its `.sha256`,
+      `public/android-version.json` points at that release (the `Sync Android
+      update feed` workflow completed), and
       `apksigner verify --print-certs` shows the release certificate (the same
       one as every earlier release), and the APK installs over the previous
       release without uninstalling.
 - [ ] The sender and receiver Sparkle appcasts point to the correct DMGs and a
-      released installation can update through each feed.
+      released installation can update through each feed; the `Sync macOS
+      update feeds` workflow completed.
 - [ ] The TestFlight upload finishes processing and launches on both an iPhone
       and an iPad when the mobile app is affected.
 - [ ] If an App Store production release is required, update its notes and

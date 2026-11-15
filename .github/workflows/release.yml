@@ -140,6 +140,9 @@ jobs:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: macos-26
+    concurrency:
+      group: publish-update-feeds
+      cancel-in-progress: false
     # The `secrets` context can't be referenced in a step-level `if:` (it's a
     # workflow-validation error). Map the Sparkle key to a job env var so the
     # appcast step can guard on its presence via the allowed `env` context.
@@ -179,6 +182,7 @@ jobs:
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
           APP_BUILD_NUMBER: ${{ github.run_number }}
         run: |
+          export APP_BUILD_NUMBER=$(( APP_BUILD_NUMBER + 1000000 ))
           export APP_MARKETING_VERSION="${TAG_NAME#v}"
           bundle exec fastlane mac build_release
           bundle exec fastlane mac build_receiver_release
@@ -305,8 +309,13 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG_NAME#v}"
-          IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION"
-          CODE=$(( MAJOR * 1000000 + MINOR * 10000 + PATCH * 100 ))
+          CORE="${VERSION%%-*}"
+          IFS=. read -r MAJOR MINOR PATCH <<< "$CORE"
+          SUFFIX=0
+          if [[ "$VERSION" =~ -zh\.([0-9]+)$ ]]; then
+            SUFFIX="${BASH_REMATCH[1]}"
+          fi
+          CODE=$(( MAJOR * 1000000 + MINOR * 10000 + PATCH * 100 + SUFFIX ))
           ./gradlew --no-daemon assembleRelease \
             -PappVersionName="$VERSION" -PappVersionCode="$CODE"
 
@@ -391,8 +400,13 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${TAG_NAME#v}"
-          IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION"
-          CODE=$(( MAJOR * 1000000 + MINOR * 10000 + PATCH * 100 ))
+          CORE="${VERSION%%-*}"
+          IFS=. read -r MAJOR MINOR PATCH <<< "$CORE"
+          SUFFIX=0
+          if [[ "$VERSION" =~ -zh\.([0-9]+)$ ]]; then
+            SUFFIX="${BASH_REMATCH[1]}"
+          fi
+          CODE=$(( MAJOR * 1000000 + MINOR * 10000 + PATCH * 100 + SUFFIX ))
           ./gradlew --no-daemon bundleRelease -PappMinSdk=24 \
             -PappVersionName="$VERSION" -PappVersionCode="$CODE"
 
