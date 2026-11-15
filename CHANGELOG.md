@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.31.0](https://github.com/mofu2003/opendisplay/compare/v1.30.3...v1.31.0) (2026-11-15)
+
+
+### Features
+
+* **android:** add APK auto-update and clean fork links ([9dbd2b9](https://github.com/mofu2003/opendisplay/commit/9dbd2b9eb3793072d02bf971677d17de2b93432a))
+* **android:** show IME for remote text fields ([3bdb1bd](https://github.com/mofu2003/opendisplay/commit/3bdb1bddeccfba2474f0e781ab7a100d18d468f8))
+* **cast:** merge sender and receiver modes with pointer and text input ([4c89561](https://github.com/mofu2003/opendisplay/commit/4c89561702a2f770c7b7af3b0594e272faf1cca0))
+* **i18n:** add Simplified Chinese localization ([9a5269e](https://github.com/mofu2003/opendisplay/commit/9a5269e01a370a58a19dd0a40766d2da41711356))
+* **input:** complete Android touchpad input ([27d0a4e](https://github.com/mofu2003/opendisplay/commit/27d0a4eefa4a2809c504cfeeb6b5bc06770b8486))
+* let Android request a Mac connection ([9c16aa7](https://github.com/mofu2003/opendisplay/commit/9c16aa7ff9fa2b33ae46d32754f4cd5fb2230898))
+* **mac:** add configurable stream frame rate ([d5a8e53](https://github.com/mofu2003/opendisplay/commit/d5a8e5379b481b5728c56da6216ee760c61b4129))
+* redesign Android UI and serve updates from the fork ([53deac8](https://github.com/mofu2003/opendisplay/commit/53deac8d0e073a682a51fbd53d47dae2bd4a6b7b))
+* **update:** automate macOS and Android update delivery ([d262cd0](https://github.com/mofu2003/opendisplay/commit/d262cd0dec94a488bf9d7ea0c95565fc9ef3fb20))
+
+
+### Bug Fixes
+
+* **android:** bypass stale update manifest cache ([f546949](https://github.com/mofu2003/opendisplay/commit/f546949ac0ff43bd3e1f178e7f7734e6eb9df761))
+* **android:** clear pending update when permission is cancelled ([ff4ff8a](https://github.com/mofu2003/opendisplay/commit/ff4ff8a41d93ade5b832cdf042ffc2155a79f6a5))
+* **ci:** use the runner Android SDK for update feed sync ([3cbbe6d](https://github.com/mofu2003/opendisplay/commit/3cbbe6dbcf0370071a662fd383962de5e1e374c7))
+* **input:** restore remote IME and publish zh.9 ([1a8b16e](https://github.com/mofu2003/opendisplay/commit/1a8b16eaf26f1cdc2ae2f73884a51780ac803c80))
+* **mirror:** restore tablet touch input and harden casting ([868c457](https://github.com/mofu2003/opendisplay/commit/868c4574b4f4488be6dba7c51c7f52518a29dd9d))
+* **release:** keep complete Android update notes ([d79f58f](https://github.com/mofu2003/opendisplay/commit/d79f58f346f293aa34c266515b19d3475a493d59))
+* **release:** repair macOS zh.10 startup [skip ci] ([d36e484](https://github.com/mofu2003/opendisplay/commit/d36e48409e9c41d7c46d7f3c696e3b5aad01edb1))
+
 ## [1.30.3](https://github.com/peetzweg/opendisplay/compare/v1.30.2...v1.30.3) (2026-11-14)
 
 
