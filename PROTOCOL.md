@@ -100,6 +100,60 @@ The receiver advertises a Bonjour (mDNS/DNS-SD) service:
 Senders MUST tolerate an absent TXT record and absent keys (pre-`pv` 2
 receivers advertise neither).
 
+### 2.1.1 Receiver-initiated connection (bootstrap)
+
+Normally the user starts a WiFi session from the sending Mac. A receiver MAY
+instead ask the sender to start it. This is an optional bootstrap protocol:
+successful negotiation ends the bootstrap connection, and the sender then
+dials the receiver's normal `_opensidecar._tcp` service as described in 2.1.
+The roles in section 1 do not change, and no video or input is sent over the
+bootstrap connection.
+
+A sender that accepts such requests advertises a second Bonjour service:
+
+* **Type:** `_od-sender._tcp`
+* **Name:** a human-readable name for the Mac.
+* **TXT record keys:** `id` is a stable per-install sender identity; `pv` is
+  the bootstrap protocol version, currently `"1"`.
+
+The receiver discovers that service and opens one TCP connection to its
+advertised host and port. It sends exactly one framed message, using the
+framing in section 3, containing UTF-8 JSON:
+
+```json
+{"type":"connectRequest","pv":1,"id":"<receiver install id>",
+ "name":"<display name>","device":"<device kind>"}
+```
+
+| Field | Required | Meaning |
+|---|---|---|
+| `type` | yes | `"connectRequest"` |
+| `pv` | no | Bootstrap version. Absent is treated as 1; versions above 1 are rejected. |
+| `id` | yes | The receiver's stable install id, matching its `_opensidecar._tcp` TXT `id` and `hello.id`. |
+| `name` | no | Display name for logs and prompts. |
+| `device` | no | Free-form device kind, such as `"Android tablet"`. |
+
+Implementations SHOULD reject bootstrap frames larger than 64 KiB.
+
+The sender replies with one framed JSON message and closes the bootstrap
+connection:
+
+| Reply | Meaning |
+|---|---|
+| `{"type":"accepted","pv":1}` | The sender accepted the request and is dialing the receiver's port 9000. This does not guarantee that the video session was established. |
+| `{"type":"rejected","pv":1,"reason":"disabled"}` | The sender does not accept connection requests. |
+| `{"type":"rejected","pv":1,"reason":"unknownDevice"}` | The receiver is not authorized to start sessions. |
+| `{"type":"rejected","pv":1,"reason":"receiverNotVisible"}` | The sender accepted the policy but cannot currently see the receiver's `_opensidecar._tcp` service. |
+| `{"type":"rejected","pv":1,"reason":"unavailable"}` | The sender could not start the session. |
+
+There is no authentication in the core protocol. The official Mac sender
+therefore authorizes by receiver install id: devices that have completed a
+session before may request another one. A user can temporarily allow
+unrecognized devices so a new receiver can connect once; the sender remembers
+that id after the normal `hello` exchange and may turn the temporary setting
+off again. The Mac must be awake and the sender app running to answer. A
+sleeping Mac cannot start a session.
+
 ### 2.2 USB (Apple devices)
 
 For iPhones/iPads on a cable, the sender dials through **usbmuxd**, the

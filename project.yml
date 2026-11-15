@@ -61,7 +61,7 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         LSUIElement: true
         NSLocalNetworkUsageDescription: OpenDisplay connects to your iPad or iPhone over the local network in WiFi mode.
-        NSBonjourServices: ["_opensidecar._tcp"]
+        NSBonjourServices: ["_opensidecar._tcp", "_od-sender._tcp"]
         LSApplicationCategoryType: public.app-category.utilities
         # --- Sparkle auto-update (issue #52) ---
         # Fork feed: this repository's release workflow commits the signed
@@ -168,6 +168,7 @@ targets:
       - Mac/VirtualCanvasSizing.swift
       - Mac/PhoneInfo.swift
       - Mac/DesktopPolicy.swift
+      - Mac/ReverseConnectionRequest.swift
       - Mac/CaptureSourceCheck.swift
       - Mac/AndroidUSBFunction.swift
       - Mac/USBAccessory.swift

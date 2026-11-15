@@ -75,6 +75,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     private lateinit var updates: UpdateManager
     private var updateDialog: AlertDialog? = null
     private var downloadDialog: AlertDialog? = null
+    private var macRequestDialog: MacRequestDialog? = null
     private var pendingUpdateFile: File? = null
     private lateinit var server: ReceiverServer
     private lateinit var advertiser: Advertiser
@@ -205,7 +206,8 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         val index = root.indexOfChild(idleView)
         val visibility = idleView.visibility
         root.removeView(idleView)
-        idleView = IdleView(this, uiKind(), { showSettings() }, ::openSender)
+        idleView = IdleView(
+            this, uiKind(), { showSettings() }, ::openSender, ::openMacRequest)
             .apply { this.visibility = visibility }
         root.addView(idleView, index, FrameLayout.LayoutParams(MATCH, MATCH))
         refreshIdle()
@@ -223,6 +225,27 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         stopService(Intent(this, app.opendisplay.android.sender.SenderService::class.java))
         pauseReceiver()
         startActivity(Intent(this, app.opendisplay.android.sender.SenderActivity::class.java))
+    }
+
+    /** Ask a discovered Mac to dial this device; the normal receiver session follows. */
+    private fun openMacRequest() {
+        if (app.opendisplay.android.sender.SenderService.casting) return
+        if (!server.isListening) server.start()
+        if (!advertiser.isActive) {
+            advertiser.register(DeviceIdentity.serviceName(this), installId)
+        }
+        macRequestDialog?.dismiss()
+        macRequestDialog = MacRequestDialog(
+            this,
+            installId,
+            advertiser.registeredName ?: DeviceIdentity.serviceName(this),
+            DeviceIdentity.deviceKind(this),
+        ) { macName ->
+            main.removeCallbacks(requestStatusTimeout)
+            main.postDelayed(requestStatusTimeout, 15_000)
+            idleView.setStatus(
+                getString(R.string.request_mac_connecting, macName), connected = false)
+        }.also { it.show() }
     }
 
     private fun showSettings() {
@@ -304,6 +327,9 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
 
     override fun onStop() {
         super.onStop()
+        macRequestDialog?.dismiss()
+        macRequestDialog = null
+        main.removeCallbacks(requestStatusTimeout)
         main.removeCallbacks(resendHello)
         pauseReceiver()
     }
@@ -506,7 +532,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         }
         root.addView(blank, FrameLayout.LayoutParams(MATCH, MATCH))
 
-        idleView = IdleView(this, uiKind(), { showSettings() }, ::openSender)
+        idleView = IdleView(this, uiKind(), { showSettings() }, ::openSender, ::openMacRequest)
         root.addView(idleView, FrameLayout.LayoutParams(MATCH, MATCH))
 
         inputHint = TextView(this).apply {
@@ -621,6 +647,10 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
     }
 
     private val resendHello = Runnable { Thread { server.sendHello() }.start() }
+
+    private val requestStatusTimeout = Runnable {
+        if (!connected) idleView.setStatus(getString(R.string.status_ready), connected = false)
+    }
 
     @Suppress("DEPRECATION")
     private fun maxRefreshRate(): Int {
@@ -751,6 +781,7 @@ class MainActivity : AppCompatActivity(), ReceiverServer.Listener, VideoDecoder.
         hasPictureFlag = false
         decoder.reset()
         main.post {
+            main.removeCallbacks(requestStatusTimeout)
             connected = true
             hasPicture = false
             macInputAvailable = null

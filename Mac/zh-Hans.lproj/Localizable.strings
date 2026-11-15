@@ -18,6 +18,11 @@
 "A smooth default for most devices." = "适用于大多数设备的流畅默认值。";
 "Smoother motion when both devices support it; otherwise the stream is capped automatically." = "两端都支持时提供更流畅的动态画面，否则会自动降到可用上限。";
 "Extend mode's virtual display is limited to 60 fps." = "扩展模式的虚拟显示器当前最高支持 60 帧/秒。";
+"Connection requests" = "连接请求";
+"Allow devices to request this Mac" = "允许设备请求连接到此 Mac";
+"Devices that have connected before can ask this Mac to send its screen without using the Mac. Keep this Mac awake and OpenDisplay running." = "连接过的设备可以让此 Mac 主动发送画面，无需再操作 Mac。请保持 Mac 唤醒并让 OpenDisplay 运行。";
+"Allow unrecognized devices" = "允许未识别设备";
+"Use this once to authorize a new device. It turns off automatically after that device connects." = "仅在新设备首次授权时开启，设备连接成功后会自动关闭。";
 "Best" = "最佳";
 "Balanced" = "均衡";
 "Fast" = "流畅";

@@ -234,8 +234,39 @@ final class SenderController: ObservableObject {
         rawValue: UserDefaults.standard.integer(forKey: "frameRate")) ?? .automatic {
         didSet { UserDefaults.standard.set(frameRate.rawValue, forKey: "frameRate") }
     }
+    @Published var acceptConnectionRequests =
+        UserDefaults.standard.object(forKey: "acceptConnectionRequests") == nil
+        || UserDefaults.standard.bool(forKey: "acceptConnectionRequests") {
+        didSet {
+            UserDefaults.standard.set(acceptConnectionRequests, forKey: "acceptConnectionRequests")
+            if !acceptConnectionRequests { allowUnrecognizedRequestDevices = false }
+            configureReverseRequests()
+        }
+    }
+    @Published var allowUnrecognizedRequestDevices =
+        UserDefaults.standard.bool(forKey: "allowUnrecognizedRequestDevices") {
+        didSet {
+            UserDefaults.standard.set(allowUnrecognizedRequestDevices,
+                                      forKey: "allowUnrecognizedRequestDevices")
+        }
+    }
 
     var running: Bool { !sessions.isEmpty }
+
+    private let reverseRequests = ReverseRequestServer(identifier: {
+        if let existing = UserDefaults.standard.string(forKey: "hostInstallID") {
+            return existing
+        }
+        let fresh = UUID().uuidString
+        UserDefaults.standard.set(fresh, forKey: "hostInstallID")
+        return fresh
+    }())
+    private var knownReceiverIDs =
+        Set(UserDefaults.standard.stringArray(forKey: "knownReceiverIDs") ?? []) {
+        didSet {
+            UserDefaults.standard.set(Array(knownReceiverIDs), forKey: "knownReceiverIDs")
+        }
+    }
 
     private var browser: NWBrowser?
     /// Local Network access is off for this app. macOS has no API to ask,
@@ -310,6 +341,7 @@ final class SenderController: ObservableObject {
     private var everOnCable: Set<String> = []
 
     init() {
+        knownReceiverIDs.formUnion(installIDByUDID.values)
         startBrowsing()
         usbWatcher = UsbmuxDeviceWatcher { [weak self] devices in
             self?.usbmuxDevices = devices
@@ -324,6 +356,58 @@ final class SenderController: ObservableObject {
             self.wifiAutoConnectArmed = true
             self.autoConnect()
         }
+        reverseRequests.handler = { [weak self] request, remoteHost in
+            guard let self else { return .rejected(.unavailable) }
+            return self.handleReverseConnectionRequest(request, remoteHost: remoteHost)
+        }
+        configureReverseRequests()
+    }
+
+    private func configureReverseRequests() {
+        guard acceptConnectionRequests else {
+            reverseRequests.stop()
+            Log.info("reverse requests: disabled")
+            return
+        }
+        reverseRequests.start(name: Host.current().localizedName ?? "OpenDisplay Mac")
+    }
+
+    private func handleReverseConnectionRequest(
+        _ request: ReverseConnectionRequest, remoteHost: String?
+    ) -> ReverseConnectionReply {
+        guard acceptConnectionRequests else {
+            Log.info("reverse request from \(remoteHost ?? "unknown") rejected: disabled")
+            return .rejected(.disabled)
+        }
+        let resultByID = discovered.first(where: { txtID(of: $0) == request.receiverID })
+        let resultByName = request.receiverName.flatMap { name in
+            discovered.first(where: { serviceName(of: $0) == name })
+        }
+        let known = knownReceiverIDs.contains(request.receiverID)
+            || resultByID.map {
+                wifiRemembered.contains(ConnectionTarget.wifi($0).sessionID)
+            } == true
+            || request.receiverName.map { wifiRemembered.contains("wifi:\($0)") } == true
+        guard known || allowUnrecognizedRequestDevices else {
+            Log.info("reverse request from \(request.receiverName ?? request.receiverID) "
+                + "rejected: device has not connected before")
+            return .rejected(.unknownDevice)
+        }
+        if sessions.contains(where: { !$0.failed && $0.deviceID == request.receiverID }) {
+            Log.info("reverse request from \(request.receiverName ?? request.receiverID): already connected")
+            return .accepted
+        }
+        // BTXT records occasionally arrive after the service record, so a
+        // known device may be discoverable by its displayed name first.
+        guard let result = resultByID ?? (known ? resultByName : nil) else {
+            Log.info("reverse request from \(request.receiverName ?? request.receiverID) "
+                + "rejected: receiver is not visible yet")
+            return .rejected(.receiverNotVisible)
+        }
+        Log.info("reverse request from \(request.receiverName ?? result.endpoint.debugDescription) "
+            + "on \(remoteHost ?? "unknown") — dialing receiver")
+        connect(to: .wifi(result), userInitiated: true)
+        return .accepted
     }
 
     private func startBrowsing() {
@@ -770,6 +854,14 @@ final class SenderController: ObservableObject {
             guard let self, let session else { return }
             session.deviceID = info.id
             session.deviceKind = info.device
+            if let id = info.id, self.knownReceiverIDs.insert(id).inserted {
+                Log.info("remembered receiver \(id) for reverse requests")
+                if self.allowUnrecognizedRequestDevices {
+                    self.allowUnrecognizedRequestDevices = false
+                    Log.info("reverse requests: new device authorized; "
+                        + "unrecognized requests disabled")
+                }
+            }
             session.helloArrived(info)
             let power = (info.power ?? []).compactMap(PowerAction.init(rawValue:))
             if power != session.powerActions {
@@ -1178,6 +1270,21 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                     if controller.mode == .extend {
                         Text("Extend mode's virtual display is limited to 60 fps.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Section("Connection requests") {
+                    Toggle("Allow devices to request this Mac",
+                           isOn: $controller.acceptConnectionRequests)
+                    if controller.acceptConnectionRequests {
+                        Text("Devices that have connected before can ask this Mac to send its screen without using the Mac. Keep this Mac awake and OpenDisplay running.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Toggle("Allow unrecognized devices",
+                               isOn: $controller.allowUnrecognizedRequestDevices)
+                        Text("Use this once to authorize a new device. It turns off automatically after that device connects.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

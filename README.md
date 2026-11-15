@@ -63,6 +63,8 @@ pipeline, USB transport, input injection) are already working.
   WiFi jitter, no helper tools.
 - 📶 **WiFi with zero config** — the iPhone advertises itself via Bonjour;
   pick it from a dropdown on the Mac.
+- 📲 **Start from Android** — the Android receiver can ask a known Mac to
+  start sending its screen, so the Mac does not need to be operated first.
 - 🔍 **Retina / HiDPI** — the virtual display matches the device panel
   pixel-for-pixel (@2x), so text is sharp.
 - 👆 **Touch input built in** — your iPhone becomes a touchscreen for macOS:
@@ -482,6 +484,12 @@ under Membership, or just pick your team in Xcode's Signing pane.)
 Open the iPhone app, then pick **"iPhone (WiFi)"** from the Connection menu
 in the Mac app. Discovery is automatic via Bonjour. USB has lower latency;
 WiFi has no cable.
+
+The Android receiver can also start the connection itself: tap **Ask Mac to
+connect** and choose the Mac. The Mac must be awake and running OpenDisplay.
+Devices that connected before are accepted automatically; for a new device,
+turn on **Allow unrecognized devices** in the Mac app once. It switches itself
+off after that device connects.
 
 ### Permissions checklist
 

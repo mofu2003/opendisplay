@@ -30,6 +30,7 @@ class IdleView(
     private val kind: String,
     private val onSettings: () -> Unit,
     private val onSend: () -> Unit,
+    private val onRequestMac: () -> Unit,
 ) : ScrollView(context) {
     private val dot = View(context)
     private val status = TextView(context)
@@ -156,8 +157,11 @@ class IdleView(
         }, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
             .apply { topMargin = dp(6); bottomMargin = dp(18) })
 
-        column.addView(filledButton(R.string.sender_open, R.drawable.ic_cast) { onSend() },
+        column.addView(filledButton(R.string.request_mac_open, R.drawable.ic_laptop) { onRequestMac() },
             LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(56)))
+        column.addView(outlinedButton(R.string.sender_open, R.drawable.ic_cast) { onSend() },
+            LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(52))
+                .apply { topMargin = dp(12) })
         column.addView(outlinedButton(R.string.settings_and_help, R.drawable.ic_settings) { onSettings() },
             LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(52))
                 .apply { topMargin = dp(12) })
@@ -183,10 +187,13 @@ class IdleView(
             .apply { topMargin = dp(2); bottomMargin = dp(16) })
 
         column.addView(step(1, context.getString(R.string.hint_open_mac)))
-        column.addView(step(2, context.getString(R.string.hint_pick_wifi, kind)),
+        column.addView(step(2, context.getString(R.string.hint_request_mac)),
             LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
                 .apply { topMargin = dp(14) })
-        column.addView(step(3, context.getString(R.string.hint_keep_open)),
+        column.addView(step(3, context.getString(R.string.hint_pick_wifi, kind)),
+            LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+                .apply { topMargin = dp(14) })
+        column.addView(step(4, context.getString(R.string.hint_keep_open)),
             LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
                 .apply { topMargin = dp(14) })
         addView(column, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))

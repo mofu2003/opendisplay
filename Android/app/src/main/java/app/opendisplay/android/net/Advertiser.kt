@@ -19,6 +19,8 @@ class Advertiser(context: Context) {
     var registeredName: String? = null
         private set
 
+    val isActive: Boolean get() = registration != null
+
     fun register(name: String, installId: String, port: Int = WireProtocol.TCP_PORT) {
         main.removeCallbacksAndMessages(null)
         retries = 0

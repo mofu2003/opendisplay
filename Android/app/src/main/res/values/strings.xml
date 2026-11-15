@@ -3,6 +3,21 @@
     <string name="device_phone">phone</string>
     <string name="device_tablet">tablet</string>
     <string name="sender_open">Cast to Mac</string>
+    <string name="request_mac_open">Ask Mac to connect</string>
+    <string name="request_mac_title">Connect from this device</string>
+    <string name="request_mac_searching">Looking for Macs that can start a stream…</string>
+    <string name="request_mac_choose">Choose the Mac to connect to.</string>
+    <string name="request_mac_none">No Mac found. Open OpenDisplay on a Mac on this WiFi and allow connection requests in its settings.</string>
+    <string name="request_mac_search_failed">Could not search for Macs. Check WiFi and Local Network access.</string>
+    <string name="request_mac_requesting">Asking %1$s to connect…</string>
+    <string name="request_mac_waiting">%1$s accepted. Waiting for the picture…</string>
+    <string name="request_mac_connecting">%1$s accepted — connecting…</string>
+    <string name="request_mac_retrying">The Mac is still finding this device. Retrying %1$s…</string>
+    <string name="request_mac_failed">Could not contact the Mac: %1$s</string>
+    <string name="request_mac_unknown">This Mac only accepts requests from known devices. Connect once from the Mac, or turn on “Allow unrecognized devices” in its settings.</string>
+    <string name="request_mac_disabled">Connection requests are off on this Mac. Open OpenDisplay there and turn on “Allow devices to request this Mac”.</string>
+    <string name="request_mac_not_visible">The Mac cannot see this device yet. Keep this screen open and try again.</string>
+    <string name="request_mac_unavailable">The Mac could not start the connection. Try again.</string>
     <string name="sender_title">Cast to Mac</string>
     <string name="sender_host">Mac address</string>
     <string name="sender_port">Port</string>
@@ -29,7 +44,7 @@
     <string name="ui_get_started">Get started</string>
     <string name="ui_steps_title">How it works</string>
     <string name="ui_steps_subtitle">Usually under 10 seconds</string>
-    <string name="ui_sender_note">Share this tablet\'s screen to a Mac window</string>
+    <string name="ui_sender_note">Ask a Mac to send its screen here, or share this screen to a Mac window</string>
     <string name="sender_subtitle">Share this screen to your Mac</string>
     <string name="sender_connect_title">Connect to a Mac</string>
     <string name="sender_input_title">Keyboard &amp; mouse</string>
@@ -43,7 +58,8 @@
     <string name="update_sender">OpenDisplay on the connecting Mac is too old for this app. Update it there to reconnect.</string>
 
     <string name="hint_open_mac">Open OpenDisplay on your computer</string>
-    <string name="hint_pick_wifi">Pick this %1$s under WiFi in OpenDisplay on your computer</string>
+    <string name="hint_request_mac">Tap “Ask Mac to connect” here</string>
+    <string name="hint_pick_wifi">Or pick this %1$s under WiFi on your computer</string>
     <string name="hint_keep_open">Keep this app open. Streaming starts automatically.</string>
     <string name="settings_and_help">Settings &amp; Help</string>
     <string name="shake_tip">Tip: shake the %1$s to open settings anytime</string>

@@ -12,6 +12,11 @@ immersive insets) are used when present.
 
 - Discovery over Wi-Fi: advertises `_opensidecar._tcp` with the TXT `id`/`pv`
   keys, so the device shows up in the Mac app's list.
+- Reverse start: discovers Macs advertising `_od-sender._tcp` and asks one to
+  dial the receiver. The Mac must be awake. Previously connected devices are
+  accepted automatically; a new device needs a one-time
+  **Allow unrecognized devices** toggle in the Mac app, which turns itself off
+  after that device connects.
 - Video: H.264 always, HEVC when the device has a hardware HEVC decoder.
   MediaCodec decodes straight to a SurfaceView. Stream changes (rotation,
   quality) rebuild the decoder from the new parameter sets, and lost decode
@@ -76,7 +81,9 @@ will reject the upgrade.
 ## Connecting
 
 **Wi-Fi:** open the app on the Android device and pick it in the Mac app.
-Both need to be on the same network.
+Both need to be on the same network. To start from Android instead, tap
+**Ask Mac to connect**, choose the Mac, and wait for the normal stream to
+begin.
 
 **USB:** the Mac sender has no ADB support yet. Forward the receiver's port
 and point the sender at it by hand:
@@ -104,10 +111,12 @@ End-to-end is capture on the Mac to decoder output on the phone.
 
 ```
 protocol/  framing, demux, Annex B, H.264 SPS size, clock sync, hello,
-           cursor sequence, touch gestures (pure Kotlin, unit tested)
-net/       ReceiverServer (TCP 9000), CursorChannel (UDP 9001), Advertiser (NSD)
+           cursor sequence, touch gestures, reverse-request JSON
+net/       ReceiverServer (TCP 9000), CursorChannel (UDP 9001), Advertiser (NSD),
+           MacRequestBrowser/MacRequestClient (reverse start)
 video/     VideoDecoder (MediaCodec), DecoderCaps (videoCaps), StreamStats
-ui/        MainActivity, VideoFrame (aspect fit), CursorView, DeviceIdentity
+ui/        MainActivity, VideoFrame (aspect fit), CursorView, DeviceIdentity,
+           MacRequestDialog
 ```
 
 `tools/android/` has a scripted ffmpeg sender and a mock receiver for

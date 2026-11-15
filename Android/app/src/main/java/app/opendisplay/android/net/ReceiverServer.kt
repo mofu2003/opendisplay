@@ -91,6 +91,8 @@ class ReceiverServer(
         Thread({ acceptLoop(gen) }, "od-accept").apply { isDaemon = true }.start()
     }
 
+    val isListening: Boolean get() = synchronized(lock) { running }
+
     /** Ends the session with a best-effort courtesy message (`sleeping` or `closing`). */
     fun stop(announce: String?) {
         val session: Session?
