@@ -4,5 +4,5 @@
   "versionName": "1.30.3-zh.9",
   "apkUrl": "https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.9/OpenDisplay-Android.apk",
   "sha256": "4eb99879b94548d18dbbef44dec330cb483d408a91bf1cc1733273cf1b844096",
-  "notes": "## 输入法修复\n\n- Android：远端点击输入框后会等待焦点并重试，避免输入法偶发不弹出。\n- macOS：输入经过系统输入法，支持拼音、日文和韩文候选词。\n\n## 版本\n\n- Android `versionCode 1300309`，`versionName 1.30.3-zh.9`\n- macOS build `1000002`"
+  "notes": "## 输入法修复\n\n- Android：远端点击输入框后改为事件驱动检查焦点，并在 2 秒内重试，避免单次 140ms 检查错过输入框。\n- Android：用户点击时会强制触发焦点与输入法；连续透传文字时仍走轻量路径，不会每输入一个字符就重复点击。\n- macOS：接收窗口接入 `NSTextInputClient`，输入会经过 macOS 自带输入法，支持拼音、日文和韩文候选词，再将最终文本发送到 Android。\n\n## 版本\n\n- Android `versionCode 1300309`，`versionName 1.30.3-zh.9`\n- macOS `1.30.3-zh.9`，build `1000002`，通用二进制 `x86_64 arm64`\n\n## 文件\n\n- `OpenDisplay-Android.apk`\n- `OpenDisplay-1.30.3-zh.9.zip`\n- `OpenDisplayReceiver-1.30.3-zh.9.zip`\n\n## SHA-256\n\n- Android：`4eb99879b94548d18dbbef44dec330cb483d408a91bf1cc1733273cf1b844096`\n- macOS：`bcc734f8181558aee23c9cf5c20f7300a2abcee6d039ae66d6da266ce0ca4eea`\n- macOS Receiver：`d9c3d2a0cac7e2d4890177459fe1a3cff75142d04daa1cc3a4b0f25204115519`"
 }
