@@ -22,10 +22,15 @@ jobs:
         with:
           ref: main
 
-      - uses: android-actions/setup-android@v3
-
-      - name: Install aapt
-        run: sdkmanager "build-tools;36.0.0" >/dev/null
+      - name: Ensure aapt is available
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          if ! find "$SDK_ROOT/build-tools" -name aapt -type f 2>/dev/null | grep -q .; then
+            SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager -type f | sort -V | tail -1)"
+            set +o pipefail
+            yes | "$SDKMANAGER" "build-tools;36.0.0" >/dev/null
+          fi
 
       - name: Rebuild public/android-version.json
         env:
