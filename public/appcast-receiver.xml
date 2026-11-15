@@ -1,9 +1,14 @@
 <?xml version="1.0" standalone="yes"?>
-<!-- Fork feed. See appcast.xml. -->
 <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
-        <title>OpenDisplay Receiver (mofu2003 fork)</title>
-        <link>https://github.com/mofu2003/opendisplay</link>
-        <description>OpenDisplay fork receiver releases</description>
+        <title>OpenDisplay Receiver</title>
+        <item>
+            <title>1.30.3-zh.8</title>
+            <pubDate>Sun, 15 Nov 2026 08:06:43 +0000</pubDate>
+            <sparkle:version>1000001</sparkle:version>
+            <sparkle:shortVersionString>1.30.3-zh.8</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>12.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.8/OpenDisplayReceiver-1.30.3-zh.8.zip" length="1625384" type="application/octet-stream" sparkle:edSignature="sOT/e2nqs/9285xgg5wi/y2OS5jvnPsT0lQVPCPt3/q2GSVGPO/CiL5tdZIv+/dSkGpJqrTShOXF4JU4nwD9AA=="/>
+        </item>
     </channel>
 </rss>
