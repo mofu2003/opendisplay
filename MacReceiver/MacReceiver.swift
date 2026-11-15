@@ -469,6 +469,10 @@ final class ReceiverVideoView: NSView {
     private var tracking: NSTrackingArea?
     private var pressOrigin: CGPoint?
     private var lastDrag: CGPoint?
+    private var lastClickPoint: CGPoint?
+    private var markedText = NSMutableAttributedString()
+    private var markedRangeValue: NSRange?
+    private var selectedRangeValue = NSRange(location: 0, length: 0)
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
@@ -492,6 +496,7 @@ final class ReceiverVideoView: NSView {
 
     override func mouseDown(with event: NSEvent) {
         window?.makeFirstResponder(self)
+        lastClickPoint = convert(event.locationInWindow, from: nil)
         guard let p = normalized(event) else { return }
         pressOrigin = p
         lastDrag = p
@@ -513,21 +518,31 @@ final class ReceiverVideoView: NSView {
     }
 
     override func keyDown(with event: NSEvent) {
-        if event.modifierFlags.intersection([.command, .control, .option]).isEmpty {
-            switch event.keyCode {
-            case 51, 117: receiver?.sendKey("backspace"); return
-            case 36, 76: receiver?.sendKey("enter"); return
-            case 48: receiver?.sendKey("tab"); return
-            case 53: receiver?.sendKey("escape"); return
-            case 123, 124, 125, 126: return
-            default: break
-            }
-            if let text = event.characters, !text.isEmpty {
-                receiver?.sendText(text)
-                return
-            }
+        guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty else {
+            super.keyDown(with: event)
+            return
         }
-        super.keyDown(with: event)
+        // Route printable keys through the active macOS input method. Reading
+        // NSEvent.characters directly bypasses Pinyin/Japanese/Korean IMEs and
+        // sends only the raw keystrokes to Android.
+        interpretKeyEvents([event])
+    }
+
+    override func doCommand(by selector: Selector) {
+        switch selector {
+        case #selector(NSResponder.deleteBackward(_:)),
+             #selector(NSResponder.deleteForward(_:)):
+            receiver?.sendKey("backspace")
+        case #selector(NSResponder.insertNewline(_:)):
+            receiver?.sendKey("enter")
+        case #selector(NSResponder.insertTab(_:)),
+             #selector(NSResponder.insertBacktab(_:)):
+            receiver?.sendKey("tab")
+        case #selector(NSResponder.cancelOperation(_:)):
+            receiver?.sendKey("escape")
+        default:
+            break
+        }
     }
 
     override func layout() {
@@ -581,6 +596,77 @@ final class ReceiverVideoView: NSView {
         // Video-space y grows downward, view coords grow upward — flip.
         cursorLayer.position = CGPoint(x: rect.minX + cursorNorm.x * rect.width,
                                        y: rect.maxY - cursorNorm.y * rect.height)
+    }
+}
+
+// MARK: - macOS text input
+
+extension ReceiverVideoView: NSTextInputClient {
+    func insertText(_ string: Any, replacementRange: NSRange) {
+        let text: String
+        if let attributed = string as? NSAttributedString {
+            text = attributed.string
+        } else if let plain = string as? String {
+            text = plain
+        } else {
+            text = String(describing: string)
+        }
+        unmarkText()
+        receiver?.sendText(text)
+    }
+
+    func setMarkedText(_ string: Any, selectedRange: NSRange,
+                       replacementRange: NSRange) {
+        if let attributed = string as? NSAttributedString {
+            markedText = NSMutableAttributedString(attributedString: attributed)
+        } else if let plain = string as? String {
+            markedText = NSMutableAttributedString(string: plain)
+        } else {
+            markedText = NSMutableAttributedString(string: String(describing: string))
+        }
+        markedRangeValue = NSRange(location: 0, length: markedText.length)
+        selectedRangeValue = selectedRange
+    }
+
+    func unmarkText() {
+        markedText = NSMutableAttributedString()
+        markedRangeValue = nil
+        selectedRangeValue = NSRange(location: 0, length: 0)
+    }
+
+    func selectedRange() -> NSRange {
+        selectedRangeValue
+    }
+
+    func markedRange() -> NSRange {
+        markedRangeValue ?? NSRange(location: NSNotFound, length: 0)
+    }
+
+    func hasMarkedText() -> Bool {
+        markedRangeValue != nil
+    }
+
+    func attributedSubstring(forProposedRange range: NSRange,
+                             actualRange: NSRangePointer?) -> NSAttributedString? {
+        actualRange?.pointee = NSRange(location: NSNotFound, length: 0)
+        return nil
+    }
+
+    func validAttributesForMarkedText() -> [NSAttributedString.Key] {
+        []
+    }
+
+    func firstRect(forCharacterRange range: NSRange,
+                   actualRange: NSRangePointer?) -> NSRect {
+        actualRange?.pointee = range
+        guard let window else { return .zero }
+        let anchor = lastClickPoint ?? CGPoint(x: bounds.midX, y: bounds.midY)
+        let caret = NSRect(x: anchor.x - 1, y: anchor.y - 18, width: 2, height: 18)
+        return window.convertToScreen(convert(caret, to: nil))
+    }
+
+    func characterIndex(for point: NSPoint) -> Int {
+        NSNotFound
     }
 }
 

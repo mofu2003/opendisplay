@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -45,6 +46,7 @@ class InputAccessibilityService : AccessibilityService() {
     private var moved = false
     private val main = Handler(Looper.getMainLooper())
     @Volatile private var remoteInputActive = false
+    @Volatile private var imeRequestDeadline = 0L
 
     override fun onServiceConnected() {
         instance = this
@@ -57,7 +59,14 @@ class InputAccessibilityService : AccessibilityService() {
         super.onDestroy()
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (!remoteInputActive || imeRequestDeadline == 0L) return
+        when (event?.eventType) {
+            AccessibilityEvent.TYPE_VIEW_FOCUSED,
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED,
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> requestImeWhenReady(0)
+        }
+    }
 
     override fun onInterrupt() = Unit
 
@@ -80,10 +89,12 @@ class InputAccessibilityService : AccessibilityService() {
                     swipe(sx, sy, ex, ey)
                 } else {
                     tap(sx, sy)
-                    // The tap may have focused an EditText. Give the target
-                    // app a beat to move input focus, then let Android show
-                    // its own IME (including a hardware-keyboard layout).
-                    main.postDelayed({ showImeIfEditable() }, 140)
+                    // The tap may have focused an EditText. Focus arrives on
+                    // the app's schedule, and slow/OEM builds regularly miss
+                    // a single fixed delay, so retry until a focused editable
+                    // node appears (or the window changes away).
+                    imeRequestDeadline = SystemClock.uptimeMillis() + 2000
+                    main.postDelayed({ requestImeWhenReady(0) }, 80)
                 }
             }
         }
@@ -101,7 +112,7 @@ class InputAccessibilityService : AccessibilityService() {
         if (node != null) {
             val old = node.text?.toString().orEmpty()
             if (setText(node, old + text)) {
-                requestIme(node)
+                requestIme(node, force = false)
                 return
             }
         }
@@ -131,7 +142,7 @@ class InputAccessibilityService : AccessibilityService() {
             }
             "escape" -> performGlobalAction(GLOBAL_ACTION_BACK)
         }
-        if (key != "escape") requestIme(node)
+        if (key != "escape") requestIme(node, force = false)
     }
 
     private fun applyKeyboardMode(active: Boolean) {
@@ -145,16 +156,31 @@ class InputAccessibilityService : AccessibilityService() {
         softKeyboardController?.setShowMode(mode)
     }
 
-    private fun showImeIfEditable() {
-        if (!remoteInputActive) return
-        val node = editableFocus() ?: return
-        requestIme(node)
+    private fun requestImeWhenReady(attempt: Int) {
+        if (!remoteInputActive || imeRequestDeadline == 0L) return
+        if (SystemClock.uptimeMillis() > imeRequestDeadline) {
+            imeRequestDeadline = 0L
+            return
+        }
+        val node = editableFocus()
+        if (node != null) {
+            requestIme(node, force = true)
+            imeRequestDeadline = 0L
+            return
+        }
+        if (attempt < 19) {
+            main.postDelayed({ requestImeWhenReady(attempt + 1) }, 100)
+        }
     }
 
-    private fun requestIme(node: AccessibilityNodeInfo?) {
+    private fun requestIme(node: AccessibilityNodeInfo?, force: Boolean) {
         if (!remoteInputActive || node == null) return
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
-        if (imm?.isAcceptingText == true) return
+        // isAcceptingText stays true while a hardware keyboard has an active
+        // input connection, even when the soft keyboard is hidden. A user
+        // tap must therefore force the focus/click path once; injected text
+        // keeps the cheap check so it does not tap the field per character.
+        if (!force && imm?.isAcceptingText == true) return
 
         node.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
         node.performAction(AccessibilityNodeInfo.ACTION_CLICK)

@@ -1,8 +1,8 @@
 {
   "_comment": "Generated from the latest mofu2003/opendisplay GitHub release with a signed OpenDisplay-Android.apk asset.",
-  "versionCode": 1300308,
-  "versionName": "1.30.3-zh.8",
-  "apkUrl": "https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.8/OpenDisplay-Android.apk",
-  "sha256": "f207f07137a2634e8a92027ee3c256491e8a145559aafeda4cbd0ac8b8b661fb",
-  "notes": "## 自动更新已启用\n\n- Android：启动或回到前台时自动检查，发现新版本后自动下载、校验 SHA-256，并直接打开系统安装器。\n- macOS：Sparkle 后台自动检查并下载更新，退出应用时完成安装；同时保留手动“检查更新”入口。\n- 更新清单与 Sparkle appcast 改为从 GitHub Release 资产自动生成，不再依赖手工维护。\n\n## 版本\n\n- Android `versionCode 1300308`，`versionName 1.30.3-zh.8`\n- macOS build `1000001`\n\n## 安装\n\n- Android：下载 `OpenDisplay-Android.apk` 覆盖安装；首次自动更新需允许“安装未知应用”。\n- macOS：下载 `OpenDisplay-1.30.3-zh.8.zip` 或 `OpenDisplayReceiver-1.30.3-zh.8.zip`。"
+  "versionCode": 1300309,
+  "versionName": "1.30.3-zh.9",
+  "apkUrl": "https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.9/OpenDisplay-Android.apk",
+  "sha256": "4eb99879b94548d18dbbef44dec330cb483d408a91bf1cc1733273cf1b844096",
+  "notes": "## 输入法修复\n\n- Android：远端点击输入框后会等待焦点并重试，避免输入法偶发不弹出。\n- macOS：输入经过系统输入法，支持拼音、日文和韩文候选词。\n\n## 版本\n\n- Android `versionCode 1300309`，`versionName 1.30.3-zh.9`\n- macOS build `1000002`"
 }
