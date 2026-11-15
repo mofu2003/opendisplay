@@ -3,12 +3,12 @@
     <channel>
         <title>OpenDisplay</title>
         <item>
-            <title>1.30.3-zh.10</title>
-            <pubDate>Sun, 15 Nov 2026 23:46:08 +0800</pubDate>
-            <sparkle:version>1000004</sparkle:version>
-            <sparkle:shortVersionString>1.30.3-zh.10</sparkle:shortVersionString>
+            <title>1.30.3-zh.14</title>
+            <pubDate>Mon, 16 Nov 2026 01:13:00 +0800</pubDate>
+            <sparkle:version>1000008</sparkle:version>
+            <sparkle:shortVersionString>1.30.3-zh.14</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.10/OpenDisplay-1.30.3-zh.10.zip" length="2509242" type="application/octet-stream" sparkle:edSignature="UNrG8jVcHMwNqNytDEKaj+FQEs331+HVze7BqRrq3vHq3Y+7a57Ee3qHrl40R3oyiu3VRbMPcJDq3Obs0mu0CA=="/>
+            <enclosure url="https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.14/OpenDisplay-1.30.3-zh.14.zip" length="2529469" type="application/octet-stream" sparkle:edSignature="kerDfu79zv85C3hS6d3GyC5hBaYGyRiwa5tpP2b3wfZYl8UE4NQcsOsKpYgtXTYQnRLc2cVnjLxPC/yrdXnTAA=="/>
         </item>
     </channel>
 </rss>
