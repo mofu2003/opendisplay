@@ -4,11 +4,11 @@
         <title>OpenDisplay Receiver</title>
         <item>
             <title>1.30.3-zh.10</title>
-            <pubDate>Sun, 15 Nov 2026 23:32:29 +0800</pubDate>
-            <sparkle:version>1000003</sparkle:version>
+            <pubDate>Sun, 15 Nov 2026 23:46:08 +0800</pubDate>
+            <sparkle:version>1000004</sparkle:version>
             <sparkle:shortVersionString>1.30.3-zh.10</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>12.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.10/OpenDisplayReceiver-1.30.3-zh.10.zip" length="1582159" type="application/octet-stream" sparkle:edSignature="B01dUoXrBR9MYiWbPd/4mhp/oLb7vYwWt9FvarUXyzOKYSHm9UDGvfw5YMaoX8mtrd0ZQxapjJ/YY+mg9MSqAw=="/>
+            <enclosure url="https://github.com/mofu2003/opendisplay/releases/download/v1.30.3-zh.10/OpenDisplayReceiver-1.30.3-zh.10.zip" length="1581277" type="application/octet-stream" sparkle:edSignature="Imz4yhscik2nJFb/aAWubnBsZ4G/oVdW1/Ofpp3zaOaIIQ2u9z+VmPNFC7YvtVg6W36dMVrjgauDpEkEkZX6AA=="/>
         </item>
     </channel>
 </rss>
